@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+
+  "firstName": "Asha",
+  "lastName": "Menon",
+  "fullName": "Asha Menon",
+  "email": "asha.menon@example.com",
+  "phone": "+91 98450 12345",
+  "addressLine1": "12 Jayanagar 4th Block",
+  "city": "Bengaluru",
+  "state": "Karnataka",
+  "postalCode": "560011",
+  "country": "India",
+
+  "noticePeriod": "60 days",
+  "currentCtc": "42 LPA",
+  "expectedCtc": "55 LPA",
+  "yearsExperience": "7",
+  "workAuthorization": "Indian citizen, no sponsorship required",
+  "workAuthorizationYesNo": "Yes",
+  "willingToRelocate": "Yes",
+  "preferredLocation": "Bengaluru or remote",
+  "howHeard": "Company careers page",
+
+  "linkedinUrl": "https://www.linkedin.com/in/ashamenon",
+  "githubUrl": "https://github.com/ashamenon",
+  "portfolioUrl": "https://ashamenon.dev"
+}
