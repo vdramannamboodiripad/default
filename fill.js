@@ -20,6 +20,17 @@
   // because <input> with no type attribute behaves as type="text".
   var ALLOWED_INPUT_TYPES = ["text", "email", "tel", "url", "number", "search", ""];
 
+  // Names for the things Rote adds to the page. Fixed ids mean a second click can
+  // find and clean up after the first one.
+  var HIGHLIGHT_CLASS = "rote-just-filled";
+  var FADING_CLASS = "rote-just-filled-fading";
+  var STYLE_ID = "rote-highlight-style";
+  var TOAST_ID = "rote-toast";
+
+  // How long a filled field stays lit up before fading out.
+  var HIGHLIGHT_MS = 2000;
+  var FADE_MS = 500;
+
   // --------------------------------------------------------------------------
   // Cleaning up text before comparing it
   // --------------------------------------------------------------------------
@@ -402,6 +413,172 @@
   }
 
   // --------------------------------------------------------------------------
+  // The brief highlight on filled fields
+  // --------------------------------------------------------------------------
+
+  // Put Rote's own stylesheet on the page, once. Adding it again on a later click
+  // would be harmless but pointless, so it checks first.
+  //
+  // Every rule uses !important because these are competing with the job board's own
+  // stylesheet, which is far more specific than anything written here.
+  function addHighlightStyle() {
+    if (document.getElementById(STYLE_ID)) {
+      return;
+    }
+
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent =
+      "." + HIGHLIGHT_CLASS + " {" +
+      "  box-shadow: 0 0 0 3px rgba(31, 111, 67, 0.55) !important;" +
+      "  background-color: #eaf6ef !important;" +
+      "  transition: box-shadow " + FADE_MS + "ms ease, background-color " + FADE_MS + "ms ease !important;" +
+      "}" +
+      "." + FADING_CLASS + " {" +
+      "  box-shadow: 0 0 0 0 rgba(31, 111, 67, 0) !important;" +
+      "  background-color: transparent !important;" +
+      "}";
+
+    document.head.appendChild(style);
+  }
+
+  // Light the filled fields up, then fade them out and take the classes off again so
+  // the page is left exactly as it was found.
+  function highlightFields(filled) {
+    addHighlightStyle();
+
+    for (var i = 0; i < filled.length; i++) {
+      filled[i].element.classList.add(HIGHLIGHT_CLASS);
+    }
+
+    setTimeout(function () {
+      for (var j = 0; j < filled.length; j++) {
+        filled[j].element.classList.add(FADING_CLASS);
+      }
+
+      setTimeout(function () {
+        removeHighlights(filled);
+      }, FADE_MS);
+    }, HIGHLIGHT_MS);
+  }
+
+  function removeHighlights(filled) {
+    for (var i = 0; i < filled.length; i++) {
+      filled[i].element.classList.remove(HIGHLIGHT_CLASS);
+      filled[i].element.classList.remove(FADING_CLASS);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // The little box in the corner, with the undo button
+  // --------------------------------------------------------------------------
+
+  // Styles are set property by property in JavaScript rather than through a
+  // stylesheet. Inline styles like these beat almost anything the job board's own
+  // CSS might say about a div, which keeps the box readable on any page.
+  function applyStyles(element, styles) {
+    for (var property in styles) {
+      element.style[property] = styles[property];
+    }
+  }
+
+  // Show the box. `filled` is the list of fields that were just filled; when it is
+  // empty there is nothing to undo, so no undo button is offered.
+  function showToast(message, filled) {
+    removeToast();
+
+    var toast = document.createElement("div");
+    toast.id = TOAST_ID;
+    toast.setAttribute("role", "status");
+    applyStyles(toast, {
+      position: "fixed",
+      bottom: "18px",
+      right: "18px",
+      // The largest value a z-index can hold, so nothing on the page covers it.
+      zIndex: "2147483647",
+      display: "flex",
+      alignItems: "center",
+      gap: "12px",
+      maxWidth: "380px",
+      padding: "12px 14px",
+      background: "#1f2328",
+      color: "#ffffff",
+      font: "14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+      borderRadius: "8px",
+      boxShadow: "0 6px 24px rgba(0, 0, 0, 0.35)",
+      textAlign: "left",
+    });
+
+    var text = document.createElement("span");
+    text.textContent = message;
+    applyStyles(text, { flex: "1 1 auto" });
+    toast.appendChild(text);
+
+    if (filled.length > 0) {
+      var undoButton = document.createElement("button");
+      undoButton.type = "button";
+      undoButton.textContent = "Undo";
+      applyStyles(undoButton, {
+        flex: "0 0 auto",
+        padding: "6px 12px",
+        font: "inherit",
+        fontWeight: "600",
+        color: "#1f2328",
+        background: "#ffffff",
+        border: "0",
+        borderRadius: "5px",
+        cursor: "pointer",
+      });
+
+      undoButton.addEventListener("click", function () {
+        undoFill(filled);
+        // Replace the box with a confirmation that has nothing left to undo.
+        showToast("Rote put " + filled.length + " field(s) back.", []);
+      });
+
+      toast.appendChild(undoButton);
+    }
+
+    var closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.textContent = "✕";
+    closeButton.setAttribute("aria-label", "Dismiss");
+    applyStyles(closeButton, {
+      flex: "0 0 auto",
+      padding: "4px 6px",
+      font: "inherit",
+      color: "#c9ced4",
+      background: "transparent",
+      border: "0",
+      cursor: "pointer",
+    });
+    closeButton.addEventListener("click", removeToast);
+    toast.appendChild(closeButton);
+
+    document.body.appendChild(toast);
+  }
+
+  function removeToast() {
+    var existing = document.getElementById(TOAST_ID);
+
+    if (existing) {
+      existing.remove();
+    }
+  }
+
+  // Put every filled field back to whatever it held before. The same native value
+  // setter is used as for filling, so React-rendered forms notice the change going
+  // back as well as going in.
+  function undoFill(filled) {
+    for (var i = 0; i < filled.length; i++) {
+      setFieldValue(filled[i].element, filled[i].previousValue);
+    }
+
+    removeHighlights(filled);
+    console.log("Rote: undid " + filled.length + " field(s).");
+  }
+
+  // --------------------------------------------------------------------------
   // A readable name for a field, for the console summary
   // --------------------------------------------------------------------------
 
@@ -441,7 +618,22 @@
   // The main run
   // --------------------------------------------------------------------------
 
+  // Clean up after an earlier click: take the box away and turn off any highlight
+  // still showing. Without this, a second click would leave two boxes stacked up.
+  function clearPreviousRun() {
+    removeToast();
+
+    var stillLit = document.querySelectorAll("." + HIGHLIGHT_CLASS + ", ." + FADING_CLASS);
+
+    for (var i = 0; i < stillLit.length; i++) {
+      stillLit[i].classList.remove(HIGHLIGHT_CLASS);
+      stillLit[i].classList.remove(FADING_CLASS);
+    }
+  }
+
   function run(profile) {
+    clearPreviousRun();
+
     var fields = document.querySelectorAll("input, textarea, select");
 
     // What was filled, so stage 4 can highlight these and offer an undo.
@@ -475,10 +667,23 @@
     }
 
     reportToConsole(filled, skipped);
+
+    if (filled.length > 0) {
+      highlightFields(filled);
+      showToast(
+        "Rote filled " + filled.length + " field(s), left " + skipped.length + " alone.",
+        filled
+      );
+    } else {
+      showToast(
+        "Rote filled nothing here. The console lists why each field was left alone.",
+        []
+      );
+    }
   }
 
-  // Until stage 4 adds the on-page highlight and undo button, the console is how
-  // the results get checked. Open DevTools on the form page to read it.
+  // The console keeps the detail: which answer went where, which signal matched it,
+  // and the reason behind every skip. The box in the corner only carries the count.
   function reportToConsole(filled, skipped) {
     console.log(
       "%cRote: filled " + filled.length + ", left alone " + skipped.length,
@@ -522,6 +727,8 @@
         "Rote: no answers saved yet. Right-click the Rote toolbar icon and choose " +
           "Options to add them."
       );
+      clearPreviousRun();
+      showToast("No answers saved yet — right-click the Rote icon and choose Options.", []);
       return;
     }
 
