@@ -1,0 +1,16 @@
+# Personal data must never be committed.
+# Rote keeps the profile in chrome.storage.local, not on disk, so normally there
+# is nothing here to ignore. These patterns exist in case an export from the
+# options page is saved into the repo by accident.
+rote-profile*.json
+rote-export*.json
+profile.json
+*.local.json
+/exports/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Rote",
+  "version": "0.1.0",
+  "description": "Fills the questions every job application asks. Local only, no network access.",
+
+  "permissions": ["storage", "scripting", "activeTab"],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_title": "Rote — fill this application"
+  },
+
+  "options_page": "options.html",
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

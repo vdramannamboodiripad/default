@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Staff Platform Engineer — Rote test fixture (Lever-style)</title>
+    <style>
+      /* Loosely imitates jobs.lever.co. Styling has no effect on matching. */
+      body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #2b2b2b; background: #f7f7f7; margin: 0; line-height: 1.5;
+      }
+      .content-wrapper { max-width: 620px; margin: 0 auto; padding: 32px 20px 80px; }
+      .posting-headline h2 { font-size: 26px; margin: 0 0 6px; }
+      .posting-categories { color: #777; margin-bottom: 24px; }
+      .fixture-note {
+        background: #fff8e1; border: 1px solid #ffe082; border-radius: 3px;
+        padding: 10px 12px; font-size: 13px; margin-bottom: 28px;
+      }
+      .section { background: #fff; border: 1px solid #e3e3e3; border-radius: 3px;
+                 padding: 22px 24px; margin-bottom: 18px; }
+      .card-title, .section h4 { font-size: 15px; text-transform: uppercase;
+        letter-spacing: 0.04em; color: #666; margin: 0 0 18px; }
+      ul.application-fields { list-style: none; margin: 0; padding: 0; }
+      li.application-question { margin-bottom: 20px; }
+      .application-label { display: block; }
+      .application-label-inner { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+      .required-icon { color: #c0392b; margin-left: 3px; }
+      input[type="text"], input[type="email"], input[type="tel"],
+      input[type="url"], select, textarea {
+        width: 100%; padding: 8px 10px; font-size: 14px; font-family: inherit;
+        border: 1px solid #cfcfcf; border-radius: 3px; background: #fff;
+        box-sizing: border-box;
+      }
+      .template-btn-submit { padding: 11px 26px; font-size: 15px; border: 0;
+        border-radius: 3px; background: #4c4c4c; color: #fff; cursor: pointer; }
+      .hint { color: #888; font-size: 12px; margin-top: 4px; }
+    </style>
+  </head>
+  <body>
+    <div class="content-wrapper">
+      <div class="posting-headline">
+        <h2>Staff Platform Engineer</h2>
+        <div class="posting-categories">Remote (India) &middot; Engineering &middot; Full-time</div>
+      </div>
+
+      <p class="fixture-note">
+        <strong>Local test fixture — not a real job posting.</strong>
+        The form has no <code>action</code> and the button does nothing.
+      </p>
+
+      <!-- FRAGILITY, and the reason this fixture exists: Lever nests the input
+           INSIDE the <label>, with no for= attribute and no id. Label text must be
+           found by walking up to the ancestor <label>. -->
+      <form onsubmit="return false">
+        <div class="section">
+          <h4>Submit your application</h4>
+          <ul class="application-fields">
+            <li class="application-question required">
+              <label class="application-label required">
+                <div class="application-label-inner">
+                  Full name<span class="required-icon">&#10033;</span>
+                </div>
+                <input type="text" name="name" autocomplete="name" required />
+              </label>
+            </li>
+
+            <li class="application-question required">
+              <label class="application-label required">
+                <div class="application-label-inner">
+                  Email<span class="required-icon">&#10033;</span>
+                </div>
+                <input type="email" name="email" autocomplete="email" required />
+              </label>
+            </li>
+
+            <li class="application-question">
+              <label class="application-label">
+                <div class="application-label-inner">Phone</div>
+                <input type="tel" name="phone" autocomplete="tel" />
+              </label>
+            </li>
+
+            <!-- SKIP CASE: "Current company" is not one of the stored answers, so
+                 no rule matches and this must stay empty. -->
+            <li class="application-question">
+              <label class="application-label">
+                <div class="application-label-inner">Current company</div>
+                <input type="text" name="org" />
+              </label>
+            </li>
+
+            <!-- SKIP CASE: Lever's location field is a custom autocomplete widget.
+                 Typing into it without picking from its dropdown leaves the form in
+                 a broken state, and custom dropdowns are out of scope. A bare
+                 "Location" label must match no rule at all. -->
+            <li class="application-question">
+              <label class="application-label">
+                <div class="application-label-inner">Location</div>
+                <input type="text" name="location" class="location-input"
+                       autocomplete="off" />
+              </label>
+              <div class="hint">Fixture: must stay empty — custom dropdown, out of scope.</div>
+            </li>
+
+            <!-- SKIP CASE: file input. -->
+            <li class="application-question">
+              <label class="application-label">
+                <div class="application-label-inner">Resume/CV</div>
+                <input type="file" name="resume" />
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h4>Links</h4>
+          <ul class="application-fields">
+            <li class="application-question">
+              <label class="application-label">
+                <div class="application-label-inner">LinkedIn URL</div>
+                <input type="url" name="urls[LinkedIn]" />
+              </label>
+            </li>
+            <li class="application-question">
+              <label class="application-label">
+                <div class="application-label-inner">GitHub URL</div>
+                <input type="url" name="urls[GitHub]" />
+              </label>
+            </li>
+            <li class="application-question">
+              <label class="application-label">
+                <div class="application-label-inner">Portfolio URL</div>
+                <input type="url" name="urls[Portfolio]" />
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <!-- FRAGILITY: custom card questions are named cards[<uuid>][fieldN]. The
+             uuid and the N are per-posting, so attributes are useless here. Label
+             text is the only signal. -->
+        <div class="section">
+          <div class="card-title">Additional information</div>
+          <ul class="application-fields">
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">What is your notice period?</div>
+                <input type="text"
+                       name="cards[7f3a91c2-4d6e-4a10-9b55-c81e0f2ad3b7][field0]" />
+              </label>
+            </li>
+
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">Current CTC (annual)</div>
+                <input type="text"
+                       name="cards[7f3a91c2-4d6e-4a10-9b55-c81e0f2ad3b7][field1]" />
+              </label>
+              <div class="hint">Fixture: current only, no "expected" field on this page.</div>
+            </li>
+
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">Total years of experience</div>
+                <input type="text"
+                       name="cards[7f3a91c2-4d6e-4a10-9b55-c81e0f2ad3b7][field2]" />
+              </label>
+            </li>
+
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">Work authorization status</div>
+                <input type="text"
+                       name="cards[7f3a91c2-4d6e-4a10-9b55-c81e0f2ad3b7][field3]" />
+              </label>
+            </li>
+
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">
+                  Are you willing to relocate to Bengaluru?
+                </div>
+                <select name="cards[7f3a91c2-4d6e-4a10-9b55-c81e0f2ad3b7][field4]">
+                  <option value="">Select one...</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </label>
+            </li>
+
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">Preferred location</div>
+                <input type="text"
+                       name="cards[7f3a91c2-4d6e-4a10-9b55-c81e0f2ad3b7][field5]" />
+              </label>
+            </li>
+
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">How did you hear about this job?</div>
+                <input type="text" name="source" />
+              </label>
+            </li>
+
+            <!-- SKIP CASE: prose. -->
+            <li class="application-question custom-question">
+              <label class="application-label">
+                <div class="application-label-inner">
+                  Anything else you would like us to know?
+                </div>
+                <textarea rows="4"
+                          name="cards[7f3a91c2-4d6e-4a10-9b55-c81e0f2ad3b7][field6]"></textarea>
+              </label>
+              <div class="hint">Fixture: must stay empty.</div>
+            </li>
+          </ul>
+        </div>
+
+        <button type="button" class="template-btn-submit">Submit application</button>
+      </form>
+    </div>
+  </body>
+</html>

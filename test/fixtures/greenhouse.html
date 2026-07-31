@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Senior Backend Engineer — Rote test fixture (Greenhouse-style)</title>
+    <style>
+      /* Loosely imitates job-boards.greenhouse.io so the page reads like the real
+         thing while testing. Styling has no effect on matching. */
+      body {
+        font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+        color: #222;
+        background: #fff;
+        margin: 0;
+        line-height: 1.5;
+      }
+      #main { max-width: 640px; margin: 0 auto; padding: 32px 20px 80px; }
+      h1 { font-size: 28px; margin: 0 0 4px; }
+      h2 { font-size: 20px; margin: 40px 0 16px; }
+      .posting-meta { color: #666; margin: 0 0 24px; }
+      .fixture-note {
+        background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px;
+        padding: 10px 12px; font-size: 13px; margin-bottom: 28px;
+      }
+      .field { margin-bottom: 22px; }
+      .label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+      .asterisk { color: #c62828; }
+      .help { display: block; color: #777; font-size: 12px; margin-top: 4px; }
+      input[type="text"], input[type="email"], input[type="tel"],
+      input[type="url"], input[type="number"], select, textarea {
+        width: 100%; padding: 9px 10px; font-size: 14px; font-family: inherit;
+        border: 1px solid #c4c4c4; border-radius: 4px; background: #fff;
+        box-sizing: border-box;
+      }
+      input:disabled { background: #f3f3f3; color: #888; }
+      button { padding: 10px 22px; font-size: 15px; border: 0; border-radius: 4px;
+               background: #157e3f; color: #fff; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <h1>Senior Backend Engineer</h1>
+      <p class="posting-meta">Bengaluru, India &middot; Engineering &middot; Full-time</p>
+
+      <p class="fixture-note">
+        <strong>Local test fixture — not a real job posting.</strong>
+        Nothing is submitted anywhere: the form has no <code>action</code> and the
+        button does nothing.
+      </p>
+
+      <h2>Apply for this job</h2>
+
+      <!-- onsubmit returns false purely so that pressing Enter in a text field
+           cannot navigate away mid-test. -->
+      <form id="application_form" onsubmit="return false">
+        <!-- ============ Greenhouse's standard fields ============
+             These have honest name/id attributes and autocomplete tokens, so they
+             should match on signal 1 (autocomplete) or signal 2 (name/id). -->
+
+        <div class="field">
+          <label class="label" for="first_name">
+            First Name <span class="asterisk" aria-hidden="true">*</span>
+          </label>
+          <input type="text" id="first_name" name="job_application[first_name]"
+                 autocomplete="given-name" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="last_name">
+            Last Name <span class="asterisk" aria-hidden="true">*</span>
+          </label>
+          <input type="text" id="last_name" name="job_application[last_name]"
+                 autocomplete="family-name" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="email">
+            Email <span class="asterisk" aria-hidden="true">*</span>
+          </label>
+          <input type="email" id="email" name="job_application[email]"
+                 autocomplete="email" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="phone">
+            Phone <span class="asterisk" aria-hidden="true">*</span>
+          </label>
+          <input type="tel" id="phone" name="job_application[phone]"
+                 autocomplete="tel" required />
+        </div>
+
+        <!-- SKIP CASE: file input. Rote must never touch this. -->
+        <div class="field">
+          <label class="label" for="resume">
+            Resume/CV <span class="asterisk" aria-hidden="true">*</span>
+          </label>
+          <input type="file" id="resume" name="job_application[resume]" />
+          <span class="help">Attach or drop your resume here.</span>
+        </div>
+
+        <!-- SKIP CASE: already filled in. Rote must leave "Chennai" alone. -->
+        <div class="field">
+          <label class="label" for="city">City</label>
+          <input type="text" id="city" name="job_application[city]"
+                 autocomplete="address-level2" value="Chennai" />
+          <span class="help">Fixture: pre-filled on purpose. Must not be overwritten.</span>
+        </div>
+
+        <!-- SKIP CASE: disabled. Rote must leave this empty. -->
+        <div class="field">
+          <label class="label" for="country">Country</label>
+          <input type="text" id="country" name="job_application[country]"
+                 autocomplete="country-name" disabled />
+          <span class="help">Fixture: disabled on purpose. Must stay empty.</span>
+        </div>
+
+        <!-- SKIP CASE: hidden. Rote must leave this alone. -->
+        <input type="hidden" id="phone_hidden_copy" name="job_application[phone_confirm]" />
+
+        <div class="field">
+          <label class="label" for="job_application_location">Location (City)</label>
+          <input type="text" id="job_application_location"
+                 name="job_application[location]" autocomplete="off" />
+        </div>
+
+        <h2>Additional information</h2>
+
+        <!-- ============ Greenhouse custom questions ============
+             FRAGILITY: the name and id attributes carry no meaning at all. The
+             visible label text is the only signal that can be matched. -->
+
+        <div class="field">
+          <label class="label" for="question_10021547">
+            What is your notice period? <span class="asterisk" aria-hidden="true">*</span>
+          </label>
+          <input type="text" id="question_10021547"
+                 name="job_application[answers_attributes][0][text_value]" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="question_10021548">
+            How many total years of professional experience do you have?
+          </label>
+          <input type="text" id="question_10021548"
+                 name="job_application[answers_attributes][1][text_value]" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="question_10021549">
+            Expected CTC (annual, INR)
+          </label>
+          <input type="text" id="question_10021549"
+                 name="job_application[answers_attributes][2][text_value]" />
+          <span class="help">Fixture: expected only, no "current" field on this page.</span>
+        </div>
+
+        <!-- A native <select>. Fills only if one option's text matches the stored
+             answer exactly (case-insensitively). -->
+        <div class="field">
+          <label class="label" for="question_10021550">
+            Are you legally authorized to work in India?
+            <span class="asterisk" aria-hidden="true">*</span>
+          </label>
+          <select id="question_10021550"
+                  name="job_application[answers_attributes][3][text_value]">
+            <option value="">Please select</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="question_10021551">Are you willing to relocate?</label>
+          <select id="question_10021551"
+                  name="job_application[answers_attributes][4][text_value]">
+            <option value="">Please select</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+            <option value="2">Open to discussing</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="question_10021552">
+            How did you hear about this role?
+          </label>
+          <input type="text" id="question_10021552"
+                 name="job_application[answers_attributes][5][text_value]" />
+        </div>
+
+        <!-- SIGNAL 4 CASE: no <label> at all, only aria-label. -->
+        <div class="field">
+          <input type="text" id="question_10021553"
+                 name="job_application[answers_attributes][6][text_value]"
+                 aria-label="Preferred work location" />
+          <span class="help">Fixture: aria-label only, no visible label.</span>
+        </div>
+
+        <!-- SIGNAL 5 CASE: no label, no aria-label, only a placeholder. -->
+        <div class="field">
+          <input type="text" id="question_10021554"
+                 name="job_application[answers_attributes][7][text_value]"
+                 placeholder="Work authorization status" />
+          <span class="help">Fixture: placeholder only.</span>
+        </div>
+
+        <h2>Links</h2>
+
+        <div class="field">
+          <label class="label" for="question_10021560">LinkedIn Profile</label>
+          <input type="url" id="question_10021560"
+                 name="job_application[answers_attributes][8][text_value]" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="question_10021561">GitHub Profile</label>
+          <input type="url" id="question_10021561"
+                 name="job_application[answers_attributes][9][text_value]" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="question_10021562">Personal website or portfolio</label>
+          <input type="url" id="question_10021562"
+                 name="job_application[answers_attributes][10][text_value]" />
+        </div>
+
+        <!-- SKIP CASE: no rule should ever match a free-text essay box. -->
+        <div class="field">
+          <label class="label" for="question_10021563">
+            Why do you want to work here?
+          </label>
+          <textarea id="question_10021563" rows="4"
+                    name="job_application[answers_attributes][11][text_value]"></textarea>
+          <span class="help">Fixture: must stay empty — Rote does not write prose.</span>
+        </div>
+
+        <button type="button">Submit application</button>
+      </form>
+    </div>
+  </body>
+</html>

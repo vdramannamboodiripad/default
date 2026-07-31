@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Compensation questions — Rote test fixture (the awkward one)</title>
+    <style>
+      body {
+        font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+        color: #222; background: #fff; margin: 0; line-height: 1.5;
+      }
+      #main { max-width: 660px; margin: 0 auto; padding: 32px 20px 80px; }
+      h1 { font-size: 26px; margin: 0 0 6px; }
+      h2 { font-size: 17px; margin: 34px 0 14px; padding-bottom: 6px;
+           border-bottom: 1px solid #eee; }
+      .fixture-note {
+        background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px;
+        padding: 10px 12px; font-size: 13px; margin-bottom: 20px;
+      }
+      table.expectations { border-collapse: collapse; font-size: 13px; width: 100%;
+        margin-bottom: 10px; }
+      table.expectations th, table.expectations td {
+        border: 1px solid #e0e0e0; padding: 6px 8px; text-align: left; vertical-align: top; }
+      table.expectations th { background: #fafafa; }
+      .field { margin-bottom: 20px; }
+      .label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+      .hint { display: block; color: #777; font-size: 12px; margin-top: 4px; }
+      .hint b { color: #444; }
+      input[type="text"], input[type="number"] {
+        width: 100%; padding: 9px 10px; font-size: 14px; font-family: inherit;
+        border: 1px solid #c4c4c4; border-radius: 4px; box-sizing: border-box;
+      }
+      .pair { display: flex; gap: 16px; }
+      .pair .field { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <h1>Compensation questions</h1>
+
+      <p class="fixture-note">
+        <strong>Local test fixture — not a real job posting.</strong>
+        This page exists to try to make Rote confuse current pay with expected pay.
+        A swapped value here is the worst bug this project can have. A skipped
+        field is always an acceptable outcome.
+      </p>
+
+      <table class="expectations">
+        <tr><th>Field</th><th>Expected result</th></tr>
+        <tr><td>Current CTC / Expected CTC (both pairs)</td>
+            <td>Each filled with its own answer. Never swapped.</td></tr>
+        <tr><td>Last drawn salary</td>
+            <td><b>Skipped.</b> "last drawn" is on the exclude list.</td></tr>
+        <tr><td>Salary expectations</td><td>Filled with expected CTC.</td></tr>
+        <tr><td>Salary</td><td><b>Skipped.</b> Too vague to be sure.</td></tr>
+        <tr><td>Current &amp; Expected CTC (one combined box)</td>
+            <td><b>Skipped.</b> Two rules match, so neither wins.</td></tr>
+        <tr><td>The attribute-vs-placeholder trap</td>
+            <td>Filled with expected CTC — <code>name</code> beats
+                <code>placeholder</code>.</td></tr>
+      </table>
+
+      <form onsubmit="return false">
+        <h2>Pair 1 — current first, expected second</h2>
+        <div class="pair">
+          <div class="field">
+            <label class="label" for="current_ctc">Current CTC</label>
+            <input type="text" id="current_ctc" name="current_ctc" />
+          </div>
+          <div class="field">
+            <label class="label" for="expected_ctc">Expected CTC</label>
+            <input type="text" id="expected_ctc" name="expected_ctc" />
+          </div>
+        </div>
+
+        <h2>Pair 2 — expected first, current second, worded differently</h2>
+        <!-- Reversed order on purpose: a matcher that quietly depends on document
+             order instead of on the label text will get this pair backwards. -->
+        <div class="pair">
+          <div class="field">
+            <label class="label" for="q_comp_expected">Expected Compensation (Annual)</label>
+            <input type="text" id="q_comp_expected"
+                   name="job_application[answers_attributes][0][text_value]" />
+          </div>
+          <div class="field">
+            <label class="label" for="q_comp_current">Current Compensation (Annual)</label>
+            <input type="text" id="q_comp_current"
+                   name="job_application[answers_attributes][1][text_value]" />
+          </div>
+        </div>
+
+        <h2>Wordings that must be skipped</h2>
+
+        <div class="field">
+          <label class="label" for="q_last_drawn">Last drawn salary</label>
+          <input type="text" id="q_last_drawn"
+                 name="job_application[answers_attributes][2][text_value]" />
+          <span class="hint">
+            <b>Must stay empty.</b> It probably means current CTC, but "probably" is
+            not good enough — "last drawn" is an exclude pattern.
+          </span>
+        </div>
+
+        <div class="field">
+          <label class="label" for="q_bare_salary">Salary</label>
+          <input type="text" id="q_bare_salary"
+                 name="job_application[answers_attributes][3][text_value]" />
+          <span class="hint"><b>Must stay empty.</b> No rule matches a bare "Salary".</span>
+        </div>
+
+        <div class="field">
+          <label class="label" for="q_combined">Current &amp; Expected CTC</label>
+          <input type="text" id="q_combined"
+                 name="job_application[answers_attributes][4][text_value]" />
+          <span class="hint">
+            <b>Must stay empty.</b> The current-CTC rule excludes "expected" and the
+            expected-CTC rule excludes "current", so both rules drop out.
+          </span>
+        </div>
+
+        <h2>Wordings that should work</h2>
+
+        <div class="field">
+          <label class="label" for="q_salary_expectations">Salary expectations</label>
+          <input type="text" id="q_salary_expectations"
+                 name="job_application[answers_attributes][5][text_value]" />
+          <span class="hint">Should be filled with <b>expected CTC</b>.</span>
+        </div>
+
+        <h2>Signal precedence trap</h2>
+
+        <div class="field">
+          <!-- No label and no aria-label. The name attribute (signal 2) says
+               expected; the placeholder (signal 5) says current. Signal 2 wins and
+               the placeholder is never consulted. -->
+          <input type="text" name="expected_ctc_amount" placeholder="Current CTC" />
+          <span class="hint">
+            Should be filled with <b>expected CTC</b>. The <code>name</code>
+            attribute is checked before the placeholder, and once a signal matches
+            the later ones are never read.
+          </span>
+        </div>
+
+        <div class="field">
+          <!-- Same idea, the other way around: a numeric field whose id is honest. -->
+          <input type="number" id="ctc_current_lpa" name="ctc_current_lpa"
+                 placeholder="Expected CTC in LPA" />
+          <span class="hint">
+            Should be filled with <b>current CTC</b>, for the same reason.
+          </span>
+        </div>
+
+        <button type="button">Submit application</button>
+      </form>
+    </div>
+  </body>
+</html>
