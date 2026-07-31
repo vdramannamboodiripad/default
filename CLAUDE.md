@@ -89,6 +89,38 @@ contract. When Rote stops filling something, start here.
 - **Lever custom question names are opaque too**: `cards[<uuid>][field0]`. The
   `field0` / `field1` numbering is per-posting, so it can never be matched on —
   label text only.
+- **Lever nests the field inside the `<label>`,** so reading the label plainly
+  also picks up every dropdown option: the label for "Are you willing to
+  relocate?" reads as "Are you willing to relocate? Select one... Yes No".
+  `readLabelWords` in fill.js works on a copy of the label with nested fields
+  removed. If that function is ever simplified away, dropdown options will start
+  tripping exclude words and killing good matches silently.
 - **Visibility is checked with `offsetParent === null`.** This is a cheap proxy
   for "the user can see this field". It misidentifies `position: fixed` elements
   and anything inside a collapsed section.
+- **Company career sites often embed a Greenhouse board in an `<iframe>`.**
+  Iframe handling is out of scope, so Rote will appear to do nothing on those
+  pages. Open the `job-boards.greenhouse.io` or `jobs.lever.co` page directly.
+- **The `yearsExperience` exclude list contains technology names** to catch "how
+  many years of experience in Python?", which has no giveaway wording. That list
+  is expected to grow by hand as new ones turn up. It is not an attempt at
+  completeness — a missed one means a wrong number in a field, so add to it when
+  you see one.
+
+## Deliberate refusals in the matcher
+
+These look like bugs from the outside. They are not — each one is a case where
+filling would be a guess:
+
+- Only one rule may match a field. Two matches means skip ("Current & Expected
+  CTC" gets neither number).
+- The signal search stops at the first level that says anything, even if what it
+  says is "excluded". It never falls through to a weaker clue to find a match.
+- Dropdowns fill only if an option reads *exactly* like the stored answer. A
+  stored "Yes" fills a Yes/No dropdown; a stored "Indian citizen, no sponsorship
+  required" does not fill a Yes/No dropdown, and must not.
+- `input type="number"` fills only if the answer is a plain number, because a
+  number field silently discards "18 LPA".
+- A field with a `maxlength` shorter than the answer is skipped rather than
+  filled with a truncated answer.
+- Fields that already contain something are never overwritten.

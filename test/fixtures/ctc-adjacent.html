@@ -57,6 +57,9 @@
         <tr><td>The attribute-vs-placeholder trap</td>
             <td>Filled with expected CTC — <code>name</code> beats
                 <code>placeholder</code>.</td></tr>
+        <tr><td>The <code>type="number"</code> field</td>
+            <td>Recognised as current CTC, but filled only if that answer is a plain
+                number. Otherwise <b>skipped</b>.</td></tr>
       </table>
 
       <form onsubmit="return false">
@@ -112,8 +115,9 @@
           <input type="text" id="q_combined"
                  name="job_application[answers_attributes][4][text_value]" />
           <span class="hint">
-            <b>Must stay empty.</b> The current-CTC rule excludes "expected" and the
-            expected-CTC rule excludes "current", so both rules drop out.
+            <b>Must stay empty.</b> The expected-CTC rule recognises "expected CTC"
+            here, then throws itself out because "current" appears in the same
+            label. Nothing else matches, so the box is left alone.
           </span>
         </div>
 
@@ -145,7 +149,10 @@
           <input type="number" id="ctc_current_lpa" name="ctc_current_lpa"
                  placeholder="Expected CTC in LPA" />
           <span class="hint">
-            Should be filled with <b>current CTC</b>, for the same reason.
+            Recognised as <b>current CTC</b> for the same reason — but this is an
+            <code>input type="number"</code>, so it only actually fills if your
+            current CTC is a plain number like "18". An answer like "18 LPA" is
+            skipped, because a number field would silently throw it away.
           </span>
         </div>
 
