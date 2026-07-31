@@ -2,14 +2,202 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Rote — Options</title>
+    <title>Rote — your answers</title>
+    <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <h1>Rote</h1>
-    <!-- STAGE 1 STUB. The real form arrives in stage 2. This page exists now so
-         that the "options_page" entry in manifest.json points at something real
-         and the extension loads without errors. -->
-    <p>Stage 1 stub. The answers form arrives in stage 2.</p>
-    <p>Nothing here talks to the network, and nothing ever will.</p>
+    <main>
+      <header>
+        <h1>Rote</h1>
+        <p class="tagline">
+          Your answers to the questions every job application asks.
+        </p>
+        <p class="privacy">
+          Stored only on this computer, in Chrome's local extension storage.
+          Rote makes no network requests — not now, not ever.
+        </p>
+      </header>
+
+      <!-- Every input's id and name is the exact key it is stored under. The
+           JavaScript loops over this list of keys, so adding a field means adding
+           it here AND to PROFILE_KEYS in options.js. -->
+      <form id="profile_form" autocomplete="off">
+        <section>
+          <h2>Contact</h2>
+
+          <div class="row two-up">
+            <div class="field">
+              <label for="firstName">First name</label>
+              <input type="text" id="firstName" name="firstName" />
+            </div>
+            <div class="field">
+              <label for="lastName">Last name</label>
+              <input type="text" id="lastName" name="lastName" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="fullName">Full name</label>
+            <input type="text" id="fullName" name="fullName" />
+            <p class="hint">
+              Kept separately because some forms (Lever, usually) have one name
+              field instead of two.
+            </p>
+          </div>
+
+          <div class="row two-up">
+            <div class="field">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" />
+            </div>
+            <div class="field">
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" name="phone" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="addressLine1">Street address</label>
+            <input type="text" id="addressLine1" name="addressLine1" />
+          </div>
+
+          <div class="row two-up">
+            <div class="field">
+              <label for="city">City</label>
+              <input type="text" id="city" name="city" />
+            </div>
+            <div class="field">
+              <label for="state">State / province</label>
+              <input type="text" id="state" name="state" />
+            </div>
+          </div>
+
+          <div class="row two-up">
+            <div class="field">
+              <label for="postalCode">Postal code</label>
+              <input type="text" id="postalCode" name="postalCode" />
+            </div>
+            <div class="field">
+              <label for="country">Country</label>
+              <input type="text" id="country" name="country" />
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>The repetitive ones</h2>
+
+          <div class="field">
+            <label for="noticePeriod">Notice period</label>
+            <input type="text" id="noticePeriod" name="noticePeriod" />
+            <p class="hint">Written the way you'd type it, e.g. "30 days" or "2 months".</p>
+          </div>
+
+          <div class="row two-up">
+            <div class="field">
+              <label for="currentCtc">Current CTC</label>
+              <input type="text" id="currentCtc" name="currentCtc" />
+            </div>
+            <div class="field">
+              <label for="expectedCtc">Expected CTC</label>
+              <input type="text" id="expectedCtc" name="expectedCtc" />
+            </div>
+          </div>
+          <p class="hint warn">
+            These two are the ones Rote is most careful about. If a form's wording
+            is at all ambiguous — one box asking for both, or a vague "Salary" —
+            Rote leaves it empty rather than risk putting the wrong number in.
+          </p>
+
+          <div class="field">
+            <label for="yearsExperience">Total years of experience</label>
+            <input type="text" id="yearsExperience" name="yearsExperience" />
+            <p class="hint">
+              A plain number like "6" usually works in the most places, since some
+              forms only accept digits.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="workAuthorization">Work authorization status</label>
+            <input type="text" id="workAuthorization" name="workAuthorization" />
+          </div>
+
+          <div class="field">
+            <label for="willingToRelocate">Willing to relocate</label>
+            <input type="text" id="willingToRelocate" name="willingToRelocate" />
+            <p class="hint">
+              For dropdown questions, this only fills if one of the options reads
+              exactly like what you type here. "Yes" matches the most dropdowns.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="preferredLocation">Preferred location</label>
+            <input type="text" id="preferredLocation" name="preferredLocation" />
+          </div>
+
+          <div class="field">
+            <label for="howHeard">How you heard about the role</label>
+            <input type="text" id="howHeard" name="howHeard" />
+          </div>
+        </section>
+
+        <section>
+          <h2>Links</h2>
+
+          <div class="field">
+            <label for="linkedinUrl">LinkedIn</label>
+            <input type="url" id="linkedinUrl" name="linkedinUrl" />
+          </div>
+          <div class="field">
+            <label for="githubUrl">GitHub</label>
+            <input type="url" id="githubUrl" name="githubUrl" />
+          </div>
+          <div class="field">
+            <label for="portfolioUrl">Portfolio / website</label>
+            <input type="url" id="portfolioUrl" name="portfolioUrl" />
+          </div>
+        </section>
+
+        <div class="actions">
+          <button type="submit" id="save_button" class="primary">Save answers</button>
+          <span id="status_message" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <section class="backup">
+        <h2>Backup</h2>
+        <p class="hint">
+          Export writes a JSON file straight to your downloads folder. It contains
+          your address, phone number and salary figures in plain text, so keep it
+          somewhere you'd keep a bank statement — and don't put it in a git repo.
+        </p>
+        <div class="actions">
+          <button type="button" id="export_button">Export to JSON</button>
+          <button type="button" id="import_button">Import from JSON</button>
+          <!-- Hidden file input: the visible Import button clicks it. -->
+          <input type="file" id="import_file" accept="application/json,.json" hidden />
+        </div>
+        <p id="import_report" class="report"></p>
+      </section>
+
+      <section class="danger">
+        <h2>Erase</h2>
+        <p class="hint">
+          Deletes every answer from this computer. Export first if you might want
+          them back — there is no undo here.
+        </p>
+        <div class="actions">
+          <button type="button" id="clear_button" class="danger-button">
+            Erase all answers
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Loaded at the end so the form exists by the time the script runs. Extension
+         pages forbid inline script, so all behaviour lives in this file. -->
+    <script src="options.js"></script>
   </body>
 </html>
