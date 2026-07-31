@@ -59,6 +59,16 @@ confirms it passes.
 Fixtures live in `test/fixtures/` and open with `file://`. Testing against live
 postings is not an option — it would mean submitting real applications.
 
+`node test/check-rules.js` (needs node and python3, neither of which the
+extension itself uses) prints what Rote would do to every fixture field and why.
+It loads the real rules table and slices the real matching functions out of
+fill.js, so it exercises shipping code — but it keeps its own copy of the signal
+walk and of the label lookup, because those touch the DOM. **Change
+`decideForField` or `findLabelText` in fill.js and you must change
+`test/check-rules.js` and `test/extract-fields.py` to match**, or it will report
+on behaviour the extension no longer has. It cannot test injection, event
+dispatch, React, highlighting or undo. Those are Chrome-only checks.
+
 To use the `file://` fixtures, "Allow access to file URLs" must be switched on
 for Rote in `chrome://extensions`.
 
@@ -118,7 +128,9 @@ filling would be a guess:
   says is "excluded". It never falls through to a weaker clue to find a match.
 - Dropdowns fill only if an option reads *exactly* like the stored answer. A
   stored "Yes" fills a Yes/No dropdown; a stored "Indian citizen, no sponsorship
-  required" does not fill a Yes/No dropdown, and must not.
+  required" does not fill a Yes/No dropdown, and must not. Where a question comes
+  in both forms, the rule names a second answer via `dropdownKey` (only work
+  authorization does) — which is why there are 22 answers and 21 rules.
 - `input type="number"` fills only if the answer is a plain number, because a
   number field silently discards "18 LPA".
 - A field with a `maxlength` shorter than the answer is skipped rather than

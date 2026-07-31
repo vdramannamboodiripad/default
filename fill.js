@@ -103,6 +103,17 @@
     return false;
   }
 
+  // Look up a rule by the answer it is about.
+  function findRuleByKey(key) {
+    for (var i = 0; i < ROTE_RULES.length; i++) {
+      if (ROTE_RULES[i].key === key) {
+        return ROTE_RULES[i];
+      }
+    }
+
+    return null;
+  }
+
   // The first signal, handled separately because autocomplete tokens are a fixed
   // list of official values. "email" is matched as a whole token, never as a
   // fragment, and exclude patterns don't apply.
@@ -260,7 +271,20 @@
       };
     }
 
-    var key = allowedKeys[0];
+    var matchedKey = allowedKeys[0];
+
+    // A couple of questions are asked as prose in one form and as a Yes/No dropdown
+    // in another. A rule can name a second answer for the dropdown case, so that a
+    // sentence is never squeezed into a dropdown or vice versa.
+    var key = matchedKey;
+
+    if (tagName === "select") {
+      var matchedRule = findRuleByKey(matchedKey);
+      if (matchedRule && matchedRule.dropdownKey) {
+        key = matchedRule.dropdownKey;
+      }
+    }
+
     var answer = profile[key];
 
     if (typeof answer !== "string" || answer.trim() === "") {

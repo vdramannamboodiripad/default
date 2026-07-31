@@ -15,6 +15,12 @@
 //   exclude      Words that mean "this looks right but isn't". If a match pattern
 //                hits AND an exclude pattern also appears in the same text, this
 //                rule is thrown out for that field.
+//   dropdownKey  Optional. A different answer to use when the field turns out to be
+//                a dropdown rather than a text box. Only the work authorization rule
+//                needs this: written out, the answer is a sentence, but the same
+//                question is often asked as a Yes/No dropdown, where a sentence
+//                cannot be used. If this is not set, dropdowns use the normal
+//                answer.
 //
 // About spaces in patterns: before comparing, both the pattern and the text being
 // searched get cleaned up the same way. When searching an attribute like
@@ -217,6 +223,9 @@ var ROTE_RULES = [
       "work status",
     ],
     exclude: [],
+    // "Are you legally authorized to work in India?" is usually a Yes/No dropdown,
+    // and "Indian citizen, no sponsorship required" is not one of the options.
+    dropdownKey: "workAuthorizationYesNo",
   },
   {
     key: "willingToRelocate",

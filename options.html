@@ -121,6 +121,23 @@
           <div class="field">
             <label for="workAuthorization">Work authorization status</label>
             <input type="text" id="workAuthorization" name="workAuthorization" />
+            <p class="hint">
+              Written out, for forms that give you a text box — e.g. "Indian citizen,
+              no sponsorship required".
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="workAuthorizationYesNo">
+              Work authorization, as a dropdown answer
+            </label>
+            <input type="text" id="workAuthorizationYesNo" name="workAuthorizationYesNo" />
+            <p class="hint">
+              The same question is often a Yes/No dropdown — "Are you legally
+              authorized to work in X?" — where a whole sentence isn't one of the
+              options. Put just <strong>Yes</strong> (or No) here. Leave it empty and
+              Rote will skip those dropdowns instead of guessing.
+            </p>
           </div>
 
           <div class="field">

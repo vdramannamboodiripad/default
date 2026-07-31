@@ -37,6 +37,9 @@ var PROFILE_KEYS = [
   "expectedCtc",
   "yearsExperience",
   "workAuthorization",
+  // The same question asked as a Yes/No dropdown, where the sentence above cannot
+  // be used. See dropdownKey in rules.js.
+  "workAuthorizationYesNo",
   "willingToRelocate",
   "preferredLocation",
   "howHeard",
