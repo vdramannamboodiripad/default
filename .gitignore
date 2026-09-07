@@ -8,6 +8,14 @@ profile.json
 *.local.json
 /exports/
 
+# Gradient Reader keeps its settings in chrome.storage.local too. These cover an
+# export from its options page being saved into the repo by accident.
+gradient-reader-settings*.json
+
+# Tool leftovers
+__pycache__/
+*.pyc
+
 # OS / editor noise
 .DS_Store
 Thumbs.db

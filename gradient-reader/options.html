@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gradient Reader — settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+<div class="shell">
+
+  <!-- ===================================================================
+       The rail. Sliders, not opinions.
+
+       There is no configuration of this that is best for everybody — that is
+       the one finding in this area that has held up. So the extension ships
+       the controls and a passage to calibrate them against, and declines to
+       pretend it knows what will work for you.
+       =================================================================== -->
+  <aside class="rail">
+    <div class="rail-head">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1>Gradient Reader</h1>
+        <p class="sub">Every line ends on the colour the next one starts with,
+          so the return sweep has something to follow.</p>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Gradient</h2>
+      <div class="palettes" id="palettes" role="radiogroup" aria-label="Palette"></div>
+
+      <div class="row">
+        <label for="strength">Strength</label>
+        <input type="range" id="strength" min="0" max="100" step="5">
+        <output class="val" id="strengthVal"></output>
+      </div>
+
+      <div class="row">
+        <span class="row-label" id="cycleLabel">Colours</span>
+        <div class="segs" id="cycle" role="radiogroup" aria-labelledby="cycleLabel">
+          <button type="button" data-cycle="2">2</button>
+          <button type="button" data-cycle="3">3</button>
+          <button type="button" data-cycle="4">4</button>
+        </div>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="autoNight">
+        <span>Switch to Night on pages that are already dark</span>
+      </label>
+    </div>
+
+    <div class="group">
+      <h2>Against the wall of text</h2>
+      <p class="aside">Line length and leading decide how hard the return sweep
+        is in the first place. Left at zero, each of these leaves the site's own
+        value alone.</p>
+
+      <div class="row">
+        <label for="measure">Width</label>
+        <input type="range" id="measure" min="0" max="100" step="2">
+        <output class="val" id="measureVal"></output>
+      </div>
+      <div class="row">
+        <label for="leading">Leading</label>
+        <input type="range" id="leading" min="0" max="240" step="5">
+        <output class="val" id="leadingVal"></output>
+      </div>
+      <div class="row">
+        <label for="paraGap">Para gap</label>
+        <input type="range" id="paraGap" min="0" max="300" step="5">
+        <output class="val" id="paraGapVal"></output>
+      </div>
+      <div class="row">
+        <label for="size">Size</label>
+        <input type="range" id="size" min="0" max="180" step="5">
+        <output class="val" id="sizeVal"></output>
+      </div>
+      <div class="row">
+        <label for="paper">Paper</label>
+        <select id="paper">
+          <option value="site">Leave the site's colours</option>
+          <option value="white">White</option>
+          <option value="sepia">Sepia</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="face">Font</label>
+        <select id="face"></select>
+      </div>
+      <p class="aside" id="faceNote"></p>
+    </div>
+
+    <div class="group">
+      <h2>Behaviour</h2>
+      <label class="check">
+        <input type="checkbox" id="linkUnderline">
+        <span>Underline links</span>
+      </label>
+      <p class="aside">The gradient takes a link's colour away, and colour is
+        how a link announces itself. Leave this on unless the sites you read
+        underline theirs already.</p>
+      <label class="check">
+        <input type="checkbox" id="autoRun">
+        <span>Run by itself on domains I have enabled</span>
+      </label>
+      <button type="button" class="ghost" id="reset">Back to the defaults</button>
+    </div>
+  </aside>
+
+  <!-- ===================================================================
+       The stage.
+       =================================================================== -->
+  <main class="stage">
+
+    <section class="doc-wrap">
+      <div class="doc-head">
+        <h2>Calibrate here</h2>
+        <p class="meta" id="meta"></p>
+      </div>
+      <!-- Painted by engine.js, exactly as a web page would be. -->
+      <div class="doc" id="doc"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Palettes</h2>
+      <p class="lead">Colour is the only thing this extension does, so a palette
+        that collapses into one hue for some readers is not a palette, it is a
+        bug. Red against green is the pair that deuteranopia and protanopia
+        flatten, and roughly 8% of men have one of the two. None of these
+        palettes asks you to tell a red from a green.</p>
+      <div class="sheet" id="sheet"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Sites</h2>
+      <p class="lead">A domain set to <b>always on</b> holds a permission for
+        that one domain and nothing else, so the gradient is simply there next
+        time. Everywhere else, the extension can only act on the page in front
+        of you at the moment you press the button.</p>
+      <div id="sites"></div>
+      <p class="aside">Mail, documents, boards and chat apps are on a
+        never-fire list and will not start by themselves whatever this list
+        says. The button still works if you deliberately ask for it.</p>
+    </section>
+
+    <section class="panel">
+      <h2>What this extension can reach</h2>
+      <p class="lead">Read from the installed manifest, not written by hand.
+        There is no network permission in the list below, which is why the
+        extension cannot send the text of your pages anywhere: not that it
+        chooses not to, that it has no way to.</p>
+      <dl class="facts" id="facts"></dl>
+    </section>
+
+    <section class="panel">
+      <h2>Your settings</h2>
+      <p class="lead">All of it lives in <code>chrome.storage.local</code>, in
+        Chrome's own profile directory on this computer.</p>
+      <div class="buttons">
+        <button type="button" class="ghost" id="export">Save a copy</button>
+        <button type="button" class="ghost" id="importPick">Load a copy</button>
+        <button type="button" class="ghost danger" id="erase">Erase everything</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <p class="aside" id="dataNote"></p>
+    </section>
+
+  </main>
+</div>
+
+<script src="settings.js"></script>
+<script src="palettes.js"></script>
+<script src="engine.js"></script>
+<script src="specimen.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

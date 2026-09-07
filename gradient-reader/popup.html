@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Gradient Reader</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="head">
+    <div class="mark" aria-hidden="true"></div>
+    <div class="head-text">
+      <h1>Gradient Reader</h1>
+      <p class="where" id="where">Checking this page…</p>
+    </div>
+  </header>
+
+  <!-- The specimen. Real prose, real line breaks, painted by the real engine,
+       because the whole mechanism only appears at the moment a line wraps. -->
+  <div class="specimen-frame">
+    <div class="specimen" id="specimen"></div>
+  </div>
+
+  <button class="primary" id="toggle" disabled>
+    <span id="toggleLabel">Checking…</span>
+  </button>
+  <p class="hint" id="hint"></p>
+
+  <section class="block">
+    <h2>Palette</h2>
+    <div class="palettes" id="palettes" role="radiogroup" aria-label="Palette"></div>
+  </section>
+
+  <section class="block">
+    <div class="row">
+      <label for="strength">Strength</label>
+      <input type="range" id="strength" min="0" max="100" step="5">
+      <output class="val" id="strengthVal"></output>
+    </div>
+    <p class="note">Turn it down until you stop noticing it. That setting is
+      usually well below the one that looks best in a screenshot.</p>
+
+    <div class="row">
+      <span class="row-label" id="cycleLabel">Colours</span>
+      <div class="segs" id="cycle" role="radiogroup" aria-labelledby="cycleLabel">
+        <button type="button" data-cycle="2">2</button>
+        <button type="button" data-cycle="3">3</button>
+        <button type="button" data-cycle="4">4</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="alwaysBlock">
+    <label class="check">
+      <input type="checkbox" id="always">
+      <span>Always on for <b id="alwaysHost">this site</b></span>
+    </label>
+    <p class="note" id="alwaysNote">Chrome will ask for permission to read this
+      one domain. Say no and everything still works — one page at a time, when
+      you press the button.</p>
+  </section>
+
+  <footer class="foot">
+    <button type="button" class="link" id="openOptions">All settings</button>
+    <span class="privacy" title="There is no network permission in the manifest, so the extension cannot make a request even by mistake.">No network access</span>
+  </footer>
+
+  <script src="settings.js"></script>
+  <script src="palettes.js"></script>
+  <script src="engine.js"></script>
+  <script src="specimen.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

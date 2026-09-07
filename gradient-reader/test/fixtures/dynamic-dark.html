@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture — a dark page that keeps growing</title>
+<style>
+  /* Deliberately dark whatever the system is set to, because the thing being
+     tested is what happens on a site that has its own dark mode. */
+  body {
+    margin: 0; background: #14161a; color: #d9dbe0;
+    font: 17px/1.65 Georgia, "Times New Roman", serif;
+  }
+  .wrap { max-width: 42rem; margin: 0 auto; padding: 30px 24px 20vh; }
+  h1 { font-size: 27px; line-height: 1.25; margin: 0 0 20px; }
+  p { margin: 0 0 1.1em; }
+  a { color: #8ab4e8; }
+  aside {
+    margin: 0 0 28px; padding: 14px 16px; background: #1b1e24;
+    border: 1px solid #2a2e36; font: 13.5px/1.55 system-ui, sans-serif;
+  }
+  aside ol { margin: 0; padding-left: 20px; }
+  aside li { margin-bottom: 7px; }
+  button {
+    font: inherit; font-family: system-ui, sans-serif; font-size: 13px;
+    padding: 7px 13px; margin-right: 8px; color: #d9dbe0;
+    background: #22262e; border: 1px solid #343a44; border-radius: 4px;
+    cursor: pointer;
+  }
+  .controls { margin: 24px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>A dark page that keeps growing</h1>
+
+<aside>
+  <ol>
+    <li><b>Dark paper.</b> Turn the gradient on. It must switch to the
+      <i>Night</i> palette by itself. If the text goes dark on this dark
+      background, the automatic switch is broken — and that is not a subtle
+      failure, it is an unreadable page.</li>
+    <li><b>Deliberate choice wins.</b> Pick <i>Mono</i> in the popup. It must
+      stay on Mono, mixed from this page's own light ink towards its dark paper.
+      The switch is only allowed to override a palette meant for light paper.</li>
+    <li><b>New content.</b> Press <i>Append three paragraphs</i>. They should
+      colour by themselves within about half a second, without touching
+      anything that was already painted.</li>
+    <li><b>Replaced content.</b> Press <i>Replace the article</i>. Everything
+      old goes and everything new should get coloured, which is the case a
+      single-page app hits on every navigation.</li>
+    <li><b>Narrow the window.</b> Drag it thinner. Lines break in new places
+      and the colour must follow, by re-measuring rather than re-wrapping.</li>
+    <li><b>Turn it off.</b> Everything, appended paragraphs included, must go
+      back to plain.</li>
+  </ol>
+</aside>
+
+<div id="article">
+  <p>Sites with their own dark mode are the case where painting blindly does the
+  most damage. Every palette meant for white paper is built out of colours dark
+  enough to read against white, which is to say colours that vanish against
+  this. Getting it wrong here does not produce a slightly worse effect; it
+  produces a paragraph the reader cannot see at all.</p>
+
+  <p>So the paper gets measured rather than assumed. The extension walks up from
+  the article container until it finds a background that is actually painted —
+  backgrounds are usually transparent all the way to the body — works out its
+  luminance, and switches palettes if it is dark. The ink is read the same way,
+  because the strength slider mixes towards the page's own text colour and a
+  page like this one has light ink.</p>
+
+  <p>The same measurement feeds the contrast floor. Every colour stop is pulled
+  back towards the ink until it clears four and a half to one against whatever
+  paper was found, so a palette cannot quietly hand somebody grey text on a
+  grey background, and the palest stop of the lightness-only palette adapts
+  instead of being wrong on half the web.</p>
+</div>
+
+<div class="controls">
+  <button type="button" id="append">Append three paragraphs</button>
+  <button type="button" id="replace">Replace the article</button>
+</div>
+
+<script>
+/* Fixture behaviour only. The extension itself has no script like this — it is
+   here to make the page move the way a real site moves. */
+const article = document.getElementById('article');
+
+const EXTRA = [
+  'An appended paragraph, of the kind an infinite scroll or a comment section ' +
+  'produces. It has to be long enough to wrap onto several lines, because a ' +
+  'single line has no return sweep and would tell you nothing about whether ' +
+  'the observer worked.',
+
+  'The observer that notices this is debounced, because a site that appends ' +
+  'one node at a time would otherwise trigger a rescan for every node. It also ' +
+  'has to ignore the extension’s own edits, or wrapping a paragraph would ' +
+  'look like new content and start the whole thing again in a loop.',
+
+  'Whatever was already painted must stay exactly as it was. The colour cycle ' +
+  'restarts at every paragraph rather than running continuously down the page, ' +
+  'which is what makes that possible: a paragraph’s colours depend on ' +
+  'nothing above it, so nothing above it has to be redone.'
+];
+
+let round = 0;
+
+document.getElementById('append').addEventListener('click', () => {
+  round++;
+  for (const text of EXTRA) {
+    const p = document.createElement('p');
+    p.textContent = 'Round ' + round + '. ' + text;
+    article.appendChild(p);
+  }
+});
+
+document.getElementById('replace').addEventListener('click', () => {
+  article.textContent = '';
+  for (let i = 0; i < 4; i++) {
+    const p = document.createElement('p');
+    p.textContent = 'Replacement paragraph ' + (i + 1) + '. ' + EXTRA[i % EXTRA.length];
+    article.appendChild(p);
+  }
+});
+</script>
+
+</div>
+</body>
+</html>

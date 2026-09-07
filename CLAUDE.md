@@ -1,3 +1,19 @@
+# This repo holds two extensions
+
+| Where | What | Rules |
+| --- | --- | --- |
+| repo root | **Rote** — fills job application forms | this file |
+| `gradient-reader/` | **Gradient Reader** — colours lines so the eye keeps its place | `gradient-reader/CLAUDE.md` |
+
+They share nothing but a set of habits: Manifest V3, vanilla JS, no build step,
+no dependencies, no network egress, and manual verification by the owner. Load
+each folder separately in `chrome://extensions`.
+
+Everything below this line is **Rote's**. For Gradient Reader, read
+`gradient-reader/CLAUDE.md` instead.
+
+---
+
 # Rote — working rules
 
 Chrome extension that stores answers to the questions every job application asks

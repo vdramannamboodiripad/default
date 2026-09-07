@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture — an article built to catch mistakes</title>
+<style>
+  :root { --paper: #fbfbf9; --ink: #23231f; --rule: #e0e0d8; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 17px/1.6 Georgia, "Times New Roman", serif;
+  }
+  nav, header, footer, aside { font-family: system-ui, sans-serif; }
+  nav {
+    display: flex; gap: 18px; padding: 12px 24px; font-size: 13px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .wrap { max-width: 44rem; margin: 0 auto; padding: 32px 24px 20vh; }
+  header h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; }
+  .byline { font-size: 13px; color: #6a6a62; margin: 0 0 30px; }
+  article p { margin: 0 0 1.1em; }
+  blockquote {
+    margin: 1.4em 0; padding-left: 18px; border-left: 3px solid var(--rule);
+    font-style: italic;
+  }
+  pre {
+    background: #f0f0ea; padding: 12px 14px; overflow-x: auto;
+    font: 13px/1.55 ui-monospace, Menlo, monospace;
+  }
+  code { background: #f0f0ea; padding: 1px 4px; font-size: 0.9em; }
+  table { border-collapse: collapse; margin: 1.4em 0; font-size: 14px; }
+  th, td { border: 1px solid var(--rule); padding: 6px 10px; text-align: left; }
+  aside {
+    margin: 34px 0; padding: 16px 18px; background: #f2f2ec;
+    border: 1px solid var(--rule); font-size: 13.5px; line-height: 1.55;
+  }
+  aside h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+  aside ol { margin: 0; padding-left: 20px; }
+  aside li { margin-bottom: 7px; }
+  form { margin: 1.4em 0; font-family: system-ui, sans-serif; font-size: 14px; }
+  form p { margin: 0 0 10px; }
+  input, textarea { font: inherit; padding: 6px 8px; width: 100%; max-width: 24rem; }
+  [contenteditable] {
+    padding: 10px 12px; border: 1px dashed #b9b9ae; font-family: system-ui, sans-serif;
+    font-size: 14px;
+  }
+  .rtl { direction: rtl; text-align: right; }
+  footer { border-top: 1px solid var(--rule); padding: 16px 24px; font-size: 13px; }
+
+  /* A site that fights back, so the defensive reset in content.css earns its
+     keep. If Gradient Reader's spans pick these up, the page will look wrong. */
+  article span { display: inline; }
+  .gradient-headline {
+    background: linear-gradient(90deg, #b00, #00b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation. Must never be treated: it is not prose, and it is where site
+     layouts are most fragile. -->
+<nav aria-label="Sections">
+  <a href="#top">Top</a>
+  <a href="#notes">Notes</a>
+  <a href="#form">Leave a note</a>
+  <a href="#end">End</a>
+</nav>
+
+<div class="wrap">
+
+<header id="top">
+  <!-- h1 is on the never-touch list. A gradient across a single headline line
+       is decoration, and decoration is what makes this look like a toy. -->
+  <h1>Keeping your place is a separate job from reading</h1>
+  <p class="byline">A fixture. Every element below is here to catch a specific mistake.</p>
+</header>
+
+<article>
+
+<p>A page of unbroken prose asks the reader to do two things at once. The first
+is the one they came for: turning marks into words, words into sentences, and
+sentences into an argument they can hold in their head while the next sentence
+arrives. The second is bookkeeping — <em>where am I, which line was I on, have I
+read this bit already or does it only feel familiar because the sentence before
+it ended the same way</em>. The second job is invisible until it fails.</p>
+
+<p>When it fails it fails silently. The eye reaches the right-hand margin, drops,
+and sweeps back left across an inch of undifferentiated grey with nothing at the
+far end to aim at. Most of the time it lands correctly. When it doesn't, a line
+gets read twice, or skipped, and the <strong>argument being held in working
+memory slips</strong>. Rebuilding it costs real effort. After four or five
+repetitions the reader closes the tab, and an abandoned article is read at no
+words per minute at all.</p>
+
+<p>This paragraph exists to be found. Search this page for the phrase
+<strong>undifferentiated grey with nothing</strong> and the browser should
+highlight it, even though Gradient Reader has by then cut that phrase into eight
+separate elements. If find-in-page cannot match across those boundaries the
+whole approach is dead, which is why it is the first thing to check and not the
+last.</p>
+
+<blockquote>Large speed gains without comprehension loss are overstated, and
+these tools typically alter visual functions that are hard constraints or
+actively useful.<sup>1</sup></blockquote>
+
+<p>The claim being made here is narrow on purpose. Colour continuity across the
+return sweep may help a reader keep their place, so they fall off long text less
+often. It does not make anybody read faster: gaze-contingent work puts the
+useful window of word availability at fifty or sixty milliseconds, and the rest
+of the time goes on language processing that no rendering treatment touches. The
+speed claim is the one thing in this category that has been actively
+<a href="#notes">disproven</a>, and not making it is the difference between a
+product that ages well and one that doesn't.</p>
+
+<p>Some inline oddities, all of which must survive: a superscript<sup>2</sup>
+mid-sentence, a piece of <code>inline_code_untouched()</code> which must keep
+its own font and colour, an <em>emphasis inside <strong>a strong</strong>
+inside emphasis</em>, and a <span class="gradient-headline">phrase the site
+paints with background-clip</span> which must not swallow the gradient.</p>
+
+<p>Emoji and combining characters are here because chunking splits text every
+few characters, and splitting one of these in half does not merely look wrong,
+it produces a different character: a café in Zürich 👍🏽, a family 👨‍👩‍👧,
+a flag 🇮🇳, and the word नमस्ते.</p>
+
+<p class="rtl">هذه فقرة بالعربية. النص من اليمين إلى اليسار، ويجب أن يبدأ التدرج
+من الكلمة الأولى في ترتيب القراءة، وهي الكلمة الموجودة على اليمين، لا على
+اليسار.</p>
+
+<h2 id="notes">Things that must be left completely alone</h2>
+
+<p>Each of the next four blocks is on the never-touch list. If any of them
+picks up a colour, that is a bug in <code>detect.js</code>.</p>
+
+<pre>function paint(spans, layout) {
+  //   whitespace and alignment carry meaning in here
+  for (const span of spans) span.style.color = next();
+}</pre>
+
+<table>
+  <caption>A table is alignment, not prose.</caption>
+  <thead><tr><th>Claim</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>Keeps your place</td><td>Plausible, untested</td></tr>
+    <tr><td>Reading speed</td><td>Disproven elsewhere</td></tr>
+    <tr><td>Clinical benefit</td><td>Not claimed</td></tr>
+  </tbody>
+</table>
+
+<form id="form">
+  <p><label for="who">Your name</label><br>
+     <input id="who" type="text" value="A value, not prose"></p>
+  <p><label for="note">A note</label><br>
+     <textarea id="note" rows="3">Text inside a textarea is a value. Colouring it would corrupt what gets submitted.</textarea></p>
+  <p><button type="button">A button is a control</button></p>
+</form>
+
+<div contenteditable="true">This paragraph is editable. Wrapping it in spans
+would make every keystroke fight the extension, so contenteditable is refused
+outright.</div>
+
+<math><mrow><mi>x</mi><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></math>
+
+<!-- An open shadow root. A TreeWalker will not step into one and the injected
+     stylesheet does not reach inside it, so both have to be done again per
+     root. The paragraph inside should still be treated. -->
+<gr-card>
+  <template shadowrootmode="open">
+    <style>p { font-family: Georgia, serif; font-size: 17px; line-height: 1.6; }</style>
+    <p>This paragraph lives inside an open shadow root. It is long enough to
+    wrap onto more than one line, which is the only way to see whether the
+    gradient reached in here at all, and whether the little stylesheet that has
+    to be injected separately for each shadow root actually arrived.</p>
+  </template>
+</gr-card>
+
+<p id="end">One last paragraph of ordinary prose, so that the end of the article
+is somewhere plain rather than in the middle of a test case. There is nothing
+special about this one at all, which is itself the point: most of a page is
+this, and most of a page is what has to come out right.</p>
+
+</article>
+
+<!-- Skipped as an <aside>, which is also what makes it safe to put the
+     instructions inside the fixture. -->
+<aside>
+  <h2>How to use this file</h2>
+  <ol>
+    <li><b>Turn it on.</b> Click the Gradient Reader icon, then
+      <i>Turn on for this page</i>. Prose should colour; nav, the headline,
+      <code>pre</code>, the table, the form, the editable box and the maths
+      should not.</li>
+    <li><b>Find in page.</b> Ctrl+F or Cmd+F, search
+      <i>undifferentiated grey with nothing</i>. It must match and highlight.
+      This is the check that decides whether the approach works at all.</li>
+    <li><b>Copy and paste.</b> Select the first two paragraphs, copy, paste
+      into a plain text editor. No stray spaces, no missing spaces, no
+      fragments.</li>
+    <li><b>Screen reader.</b> With VoiceOver or NVDA, read the first paragraph.
+      It must say whole words. If it reads "undiff" "erent" "iated", stop —
+      spans are reaching the accessibility tree and that has to be fixed before
+      anything else.</li>
+    <li><b>Links.</b> The word <i>disproven</i> above is a link. With the
+      gradient on it loses its blue, so it must have gained an underline.</li>
+    <li><b>Zoom.</b> Ctrl+plus a few times. Lines break in new places, so the
+      colour must re-flow to match — and it must do it by re-measuring, not by
+      re-wrapping. Watch for a stall.</li>
+    <li><b>Turn it off.</b> The page must return to exactly how it started:
+      no leftover colour, no leftover spans, nav and form untouched.</li>
+    <li><b>Console.</b> One line from Gradient Reader saying how many blocks,
+      lines and spans, and the first-paint time. Nothing else, and no errors.</li>
+  </ol>
+</aside>
+
+</div>
+
+<footer>Fixture for Gradient Reader. Open with <code>file://</code> — that needs
+"Allow access to file URLs" switched on for the extension in
+<code>chrome://extensions</code>.</footer>
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+/* Gradient Reader — the styles injected into somebody else's page.
+ *
+ * Two rules only. Everything that depends on a setting is written at runtime
+ * into a single <style> element instead, so it can be rewritten when a slider
+ * moves without touching this file.
+ *
+ * !important is all over this file, which is normally a smell. Here it is the
+ * point: these rules are competing with a stylesheet written by someone who
+ * had no idea we would turn up, and losing means either a broken page or an
+ * invisible gradient. A site that puts !important on the same properties still
+ * beats us, and there is nothing further to be done about that.
+ */
+
+/* ---------------------------------------------------------------------------
+ * The wrapped pieces.
+ *
+ * A bare <span> inherits everything from its parent, so in principle none of
+ * this is needed. In practice sites have rules like `p span { display: inline-block }`
+ * or `article span { font-size: 12px }` that were written for their own markup
+ * and now land on thousands of ours.
+ *
+ * `display: inline` is the one that matters most. An inline-block breaks the
+ * text into separate boxes, and once that happens find-in-page can no longer
+ * match across the boundary and copied text arrives with gaps in it. If only
+ * one line of this file survives, it should be that one.
+ *
+ * `font: inherit` looks like it would flatten the page's own bold and italics,
+ * and does the opposite: a span inside <strong> inherits from the <strong>, so
+ * inheriting is exactly what keeps the bold.
+ *
+ * text-decoration is deliberately absent. Underlines from an ancestor <a> are
+ * drawn across descendant inline boxes by the browser and cannot be removed
+ * from below, so there is nothing to defend and any rule here would only risk
+ * making things worse.
+ * ------------------------------------------------------------------------- */
+span.gr-c {
+  display: inline !important;
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  word-spacing: inherit !important;
+  text-transform: inherit !important;
+  vertical-align: baseline !important;
+  background: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  float: none !important;
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+
+  /* Sites that do gradient headlines set -webkit-text-fill-color: transparent
+   * and paint through a background. Inherited onto our spans that makes the
+   * colour we just worked out invisible. */
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* Nothing of ours should ever be selectable as a separate thing, or announce
+ * itself to assistive technology as a separate thing. A plain span with no
+ * role and no aria attributes is already transparent to the accessibility
+ * tree; this is here to say that keeping it that way is on purpose, and that
+ * adding a role or an aria-label to these spans would be the change that makes
+ * a screen reader start reading "grad" "ient" instead of "gradient". */
+span.gr-c::before,
+span.gr-c::after {
+  content: none !important;
+}
