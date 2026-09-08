@@ -62,9 +62,9 @@ body {
   margin-top: 1px;
   border-radius: 5px;
   background:
-    linear-gradient(90deg, #1b1b1a, #0a58c2) 3px 5px / 16px 3px no-repeat,
-    linear-gradient(90deg, #0a58c2, #8f4700) 3px 10px / 16px 3px no-repeat,
-    linear-gradient(90deg, #8f4700, #0e6f78) 3px 15px / 11px 3px no-repeat,
+    linear-gradient(90deg, #2a6ee0, #8a4300) 3px 5px / 16px 3px no-repeat,
+    linear-gradient(90deg, #8a4300, #0f7d6e) 3px 10px / 16px 3px no-repeat,
+    linear-gradient(90deg, #0f7d6e, #2b2f5e) 3px 15px / 11px 3px no-repeat,
     var(--panel);
   box-shadow: inset 0 0 0 1px var(--rule);
 }

@@ -21,9 +21,10 @@
  *   well above the setting anyone can read with for an hour. Shipping the
  *   demo-friendly number would make the extension feel like a toy on day two.
  *
- *   palette is Blues, and Blues avoids the red-green axis. Reaching for red
+ *   palette is Bright, which is built on blue against amber. Reaching for red
  *   and green is the obvious way to build a high-contrast gradient and it is
- *   also the way to build one that roughly 8% of men cannot see.
+ *   also the way to build one that roughly 8% of men cannot see. Blue against
+ *   amber is the pair that gives the same contrast and survives.
  */
 
 (function () {
@@ -31,7 +32,7 @@
 
   var DEFAULTS = {
     /* --- the gradient --------------------------------------------------- */
-    palette: 'blues',
+    palette: 'bright',
     cycle: 3,          // how many colour stops in the cycle: 2, 3 or 4
     strength: 45,      // percent. 0 leaves the text alone entirely.
     autoNight: true,   // switch to the Night palette on dark pages

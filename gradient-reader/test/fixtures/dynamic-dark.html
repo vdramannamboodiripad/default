@@ -50,6 +50,14 @@
     <li><b>Replaced content.</b> Press <i>Replace the article</i>. Everything
       old goes and everything new should get coloured, which is the case a
       single-page app hits on every navigation.</li>
+    <li><b>Re-render in place.</b> Press <i>Re-render paragraph 1 in place</i>.
+      Its colour vanishes for a moment and must come back within about half a
+      second. If it stays plain, the extension has lost that paragraph for
+      good — which is what happened before this check existed.</li>
+    <li><b>Partial re-render.</b> Press <i>Insert a word into paragraph 2</i>.
+      A new sentence appears at the end and the whole paragraph must be
+      recoloured, the new sentence included. Nothing was removed here, so this
+      only works if the extension notices the text got longer.</li>
     <li><b>Narrow the window.</b> Drag it thinner. Lines break in new places
       and the colour must follow, by re-measuring rather than re-wrapping.</li>
     <li><b>Turn it off.</b> Everything, appended paragraphs included, must go
@@ -81,6 +89,8 @@
 <div class="controls">
   <button type="button" id="append">Append three paragraphs</button>
   <button type="button" id="replace">Replace the article</button>
+  <button type="button" id="rerender">Re-render paragraph 1 in place</button>
+  <button type="button" id="insert">Insert a word into paragraph 2</button>
 </div>
 
 <script>
@@ -123,6 +133,23 @@ document.getElementById('replace').addEventListener('click', () => {
     p.textContent = 'Replacement paragraph ' + (i + 1) + '. ' + EXTRA[i % EXTRA.length];
     article.appendChild(p);
   }
+});
+
+/* What a framework does on re-render: writes the same text back over the top,
+   which destroys the extension's spans without changing a word. This is the
+   case that silently lost the gradient for good in the first version, because
+   the paragraph was still marked as done. */
+document.getElementById('rerender').addEventListener('click', () => {
+  const p = article.querySelector('p');
+  if (p) p.textContent = p.textContent;
+});
+
+/* A partial re-render: new words appear between spans that are still there.
+   Nothing is removed, so "have the spans gone" does not catch it — the
+   extension has to notice the text is a different length now. */
+document.getElementById('insert').addEventListener('click', () => {
+  const p = article.querySelectorAll('p')[1];
+  if (p) p.appendChild(document.createTextNode(' An inserted sentence, arriving on its own.'));
 });
 </script>
 

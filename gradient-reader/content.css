@@ -33,6 +33,12 @@
  * from below, so there is nothing to defend and any rule here would only risk
  * making things worse.
  * ------------------------------------------------------------------------- */
+/* Kept deliberately short. Every declaration here is resolved against several
+ * thousand elements on a long article, so the list is the seven that are
+ * load-bearing and not the eighteen that a longer one would tempt. Things like
+ * `float: none` and `position: static` were in the first draft and came out
+ * again: no site styles a bare inline span that way, and the cost is paid on
+ * every span on every page. */
 span.gr-c {
   display: inline !important;
   font: inherit !important;
@@ -41,17 +47,6 @@ span.gr-c {
   text-transform: inherit !important;
   vertical-align: baseline !important;
   background: none !important;
-  border: 0 !important;
-  outline: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  float: none !important;
-  position: static !important;
-  width: auto !important;
-  height: auto !important;
-  max-width: none !important;
-  min-width: 0 !important;
 
   /* Sites that do gradient headlines set -webkit-text-fill-color: transparent
    * and paint through a background. Inherited onto our spans that makes the

@@ -86,6 +86,8 @@
     treated: null,        // Set of block elements already done
     queue: [],            // near the viewport, waiting to be wrapped
     entries: null,        // Map of block element -> { block, nodes, characters }
+    dirty: [],            // subtrees the page changed, waiting to be looked at
+    sawFirstResize: false, // ResizeObserver always fires once on observe
     chunkSize: 4,
     spanCount: 0,
     degraded: false,
@@ -128,6 +130,8 @@
     state.treated = new Set();
     state.entries = new Map();
     state.units = [];
+    state.queue = [];
+    state.dirty = [];
     state.spanCount = 0;
     state.degraded = false;
     state.reported = false;
@@ -156,8 +160,11 @@
     for (var j = 0; j < blocks.length; j++) characters += blocks[j].characters;
     state.chunkSize = engine.chooseChunkSize(characters, state.settings.nodeBudget);
 
-    watchBlocks(blocks);
+    // Observers first: startWork paints straight away, and the mutation
+    // observer has to exist by then so its record of our own edits can be
+    // thrown away rather than coming back as "new content".
     startObservers();
+    startWork(blocks);
     announce();
     return true;
   }
@@ -169,15 +176,57 @@
       var inner = detect.collectBlocks(state.shadowRoots[i]);
       for (var j = 0; j < inner.length; j++) all.push(inner[j]);
     }
+    return register(all);
+  }
 
+  /* Keep the blocks nobody has dealt with yet, and remember them so the
+   * observers can find their text nodes again later. */
+  function register(collected) {
     var fresh = [];
-    for (var k = 0; k < all.length; k++) {
-      if (state.treated.has(all[k].block)) continue;
-      if (state.entries.has(all[k].block)) continue;
-      state.entries.set(all[k].block, all[k]);
-      fresh.push(all[k]);
+    for (var i = 0; i < collected.length; i++) {
+      var block = collected[i].block;
+      if (state.treated.has(block)) continue;
+      if (state.entries.has(block)) continue;
+      state.entries.set(block, collected[i]);
+      fresh.push(collected[i]);
     }
     return fresh;
+  }
+
+  /* Start work on a fresh set of blocks.
+   *
+   * The blocks already on screen are treated **now**, synchronously, before
+   * this function returns. Everything else is handed to the
+   * IntersectionObserver and arrives as the reader scrolls to it.
+   *
+   * The first version routed everything through the observer and an idle
+   * callback, and it felt slow for a reason that had nothing to do with how
+   * much work there was: an IntersectionObserver callback does not run until
+   * after the next layout, and requestIdleCallback can sit for its whole
+   * timeout before firing. Two waits, in front of the one batch of work the
+   * reader is looking straight at. A screenful of paragraphs is a few hundred
+   * spans and a few milliseconds; making somebody wait two frames and an idle
+   * slot for it buys nothing. The lazy path is for the other ten screenfuls,
+   * where it is worth everything. */
+  function startWork(blocks) {
+    if (state.degraded) return;
+
+    // One read pass over the blocks. There are tens of these, not thousands,
+    // so this is cheap — unlike reading every span.
+    var visibleLimit = window.innerHeight + 400;
+    var now = [];
+    var later = [];
+
+    for (var i = 0; i < blocks.length; i++) {
+      var rect = blocks[i].block.getBoundingClientRect();
+      var onScreen = rect.bottom > -200 && rect.top < visibleLimit;
+      if (onScreen && now.length < BATCH_BLOCKS * 2) now.push(blocks[i]);
+      else later.push(blocks[i]);
+    }
+
+    if (now.length) treatBlocks(now);
+    if (later.length) watchBlocks(later);
+    report();
   }
 
   /* Hand every block to the IntersectionObserver. Work starts when a block is
@@ -219,7 +268,10 @@
 
   function whenIdle(callback) {
     if (typeof window.requestIdleCallback === 'function') {
-      return window.requestIdleCallback(callback, { timeout: 250 });
+      // 100ms, not 250. This only ever runs for text below the fold, but a
+      // reader who scrolls fast can outrun it, and arriving at plain text that
+      // colours in a moment later is the thing that reads as slow.
+      return window.requestIdleCallback(callback, { timeout: 100 });
     }
     // No requestIdleCallback. A short timeout at least lets the browser get a
     // frame out between batches.
@@ -289,7 +341,17 @@
       }
       if (!spans.length) continue;
 
-      var unit = { block: entry.block, spans: spans, boxes: null, lines: null };
+      var unit = {
+        block: entry.block,
+        spans: spans,
+        boxes: null,
+        lines: null,
+        // How long the text was when we wrapped it. Wrapping does not change
+        // the text, so a different length later means the site rewrote this
+        // paragraph and it needs doing again. Reading textContent does not
+        // force layout, so this is safe to do in the write phase.
+        characters: entry.block.textContent.length
+      };
       state.units.push(unit);
       state.treated.add(entry.block);
       state.spanCount += spans.length;
@@ -382,10 +444,32 @@
 
   function startObservers() {
     /* New content: infinite scroll, a comment section loading, a single-page
-     * app swapping the article out. Debounced, because a site that appends one
-     * node at a time would otherwise trigger a rescan per node. */
-    state.observer = new MutationObserver(function () {
+     * app swapping the article out.
+     *
+     * The records are kept rather than thrown away, and that is the whole
+     * point. The first version noted only "something changed" and then walked
+     * the entire article looking for what — every text node, every element,
+     * on every burst of mutations. On a page that mutates steadily, which is
+     * most modern pages, that is a treadmill running the whole time the
+     * extension is on. Remembering which subtrees actually changed turns a
+     * full-article walk into a walk of the two paragraphs that arrived. */
+    state.observer = new MutationObserver(function (records) {
       if (state.writing || !state.on) return;
+
+      for (var i = 0; i < records.length; i++) {
+        var added = records[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          if (added[j].nodeType === 1) state.dirty.push(added[j]);
+        }
+        // The target matters too, and not for new content: when a framework
+        // re-renders over a paragraph it removes our spans, and the target is
+        // the only handle on which paragraph that was.
+        if (records[i].removedNodes.length && records[i].target.nodeType === 1) {
+          state.dirty.push(records[i].target);
+        }
+      }
+
+      if (!state.dirty.length) return;
       clearTimeout(state.timers.rescan);
       state.timers.rescan = setTimeout(rescan, 400);
     });
@@ -393,8 +477,14 @@
 
     /* Anything that moves the line breaks. A ResizeObserver on the column
      * catches more than a window resize does: a sidebar folding away, a banner
-     * appearing, the reader changing the width setting. */
+     * appearing, the reader changing the width setting.
+     *
+     * It also fires once immediately on observe, by specification, and that
+     * first callback is worthless here — it arrives moments after the initial
+     * paint and would re-measure every span for nothing. */
+    state.sawFirstResize = false;
     state.resize = new ResizeObserver(function () {
+      if (!state.sawFirstResize) { state.sawFirstResize = true; return; }
       if (state.writing || !state.on) return;
       clearTimeout(state.timers.reflow);
       state.timers.reflow = setTimeout(remeasureAll, 120);
@@ -420,20 +510,116 @@
     state.timers.reflow = setTimeout(remeasureAll, 120);
   }
 
+  /* Deal with whatever changed, and only with whatever changed. */
   function rescan() {
+    var dirty = state.dirty;
+    state.dirty = [];
+
     if (!state.on || !state.root.isConnected) return;
 
-    // A custom element that arrived since the last look brings its own shadow
-    // root, and a shadow root cannot see the injected stylesheet, so each new
-    // one needs the reset again. injectShadowReset ignores the ones that
-    // already have it.
-    state.shadowRoots = openShadowRootsIn(state.root);
-    for (var i = 0; i < state.shadowRoots.length; i++) {
-      injectShadowReset(state.shadowRoots[i]);
+    var collected = [];
+    var i;
+
+    for (i = 0; i < dirty.length; i++) {
+      var node = dirty[i];
+      if (!node.isConnected || !state.root.contains(node)) continue;
+
+      var painted = nearestTreated(node);
+      if (painted) {
+        /* Inside a paragraph we have already painted. Either the site changed
+         * something harmless, or it re-rendered over our work.
+         *
+         * This branch is why a framework re-render is survivable. Without it
+         * the block stays marked as done, is never looked at again, and that
+         * paragraph loses its gradient permanently on the first re-render.
+         *
+         * Two things say the work is gone: the spans have vanished, or the
+         * text is a different length from the text we wrapped. The second
+         * catches a partial re-render that inserted new words between spans
+         * that are still there. Comparing lengths is safe because wrapping
+         * preserves the text exactly — if the length moved, the site moved
+         * it. */
+        var unit = unitFor(painted);
+        var spansGone = !painted.querySelector('span.' + engine.CHUNK_CLASS);
+        var textChanged = unit && painted.textContent.length !== unit.characters;
+
+        if (spansGone || textChanged) {
+          forget(painted);
+          collected = collected.concat(collectIn(painted));
+        }
+        continue;
+      }
+
+      collected = collected.concat(collectIn(blockRootFor(node)));
     }
 
-    var fresh = gatherBlocks();
-    if (fresh.length) watchBlocks(fresh);
+    var fresh = register(collected);
+    if (fresh.length) startWork(fresh);
+  }
+
+  /* The nearest ancestor — itself included — that we have already painted. */
+  function nearestTreated(node) {
+    var current = node;
+    while (current && current.nodeType === 1) {
+      if (state.treated.has(current)) return current;
+      if (current === state.root) return null;
+      current = current.parentNode;
+    }
+    return null;
+  }
+
+  /* Widen an arbitrary changed node out to the block it sits in, so a site
+   * inserting a bare <span> of new text does not get that span treated as a
+   * paragraph of its own — which would restart the colour cycle in the middle
+   * of a sentence. */
+  function blockRootFor(node) {
+    var current = node;
+    while (current && current.nodeType === 1 && current !== state.root) {
+      if (detect.BLOCK_TAGS[current.tagName]) return current;
+      current = current.parentNode;
+    }
+    return node;
+  }
+
+  function unitFor(block) {
+    for (var i = 0; i < state.units.length; i++) {
+      if (state.units[i].block === block) return state.units[i];
+    }
+    return null;
+  }
+
+  /* Drop everything we know about a block, so it can be treated again. */
+  function forget(block) {
+    state.treated.delete(block);
+    state.entries.delete(block);
+
+    var kept = [];
+    for (var i = 0; i < state.units.length; i++) {
+      if (state.units[i].block === block) {
+        state.spanCount -= state.units[i].spans.length;
+      } else {
+        kept.push(state.units[i]);
+      }
+    }
+    state.units = kept;
+  }
+
+  /* Blocks inside one subtree, including any open shadow roots in it. A custom
+   * element that has just arrived brings its own shadow root, and a shadow root
+   * cannot see the injected stylesheet, so each new one needs the reset again;
+   * injectShadowReset ignores the ones that already have it. */
+  function collectIn(root) {
+    var found = detect.collectBlocks(root);
+
+    var shadows = openShadowRootsIn(root);
+    for (var i = 0; i < shadows.length; i++) {
+      injectShadowReset(shadows[i]);
+      if (state.shadowRoots.indexOf(shadows[i]) < 0) state.shadowRoots.push(shadows[i]);
+      var inner = detect.collectBlocks(shadows[i]);
+      for (var j = 0; j < inner.length; j++) found.push(inner[j]);
+    }
+
+    return found;
   }
 
   /* =========================================================================
@@ -680,6 +866,7 @@
     state.root = null;
     state.units = [];
     state.queue = [];
+    state.dirty = [];
     state.shadowRoots = [];
     state.treated = null;
     state.entries = null;
@@ -763,12 +950,19 @@
     }
   }
 
-  /* One line in the console, once a page is finished. This is the only place
-   * the extension says anything, and it says it where a reader will never
-   * see it. Enough to answer "why did nothing happen" and "why was that
-   * slow" without ever putting a notice on the page. */
+  /* One line in the console, once, describing the first paint. This is the only
+   * place the extension says anything, and it says it where a reader will never
+   * see it. Enough to answer "why did nothing happen" and "why was that slow"
+   * without ever putting a notice on the page.
+   *
+   * The counts are what was painted at first paint — the screenful the reader
+   * is looking at — not the whole article, because the rest is deliberately not
+   * done yet. That is also what makes the millisecond figure meaningful: it
+   * should be roughly the same on a 500 word page and a 5,000 word one, and if
+   * it scales with the length of the article then something is processing
+   * everything up front. */
   function report() {
-    if (state.reported || !state.on) return;
+    if (state.reported || !state.on || !state.units.length) return;
     state.reported = true;
 
     var lines = 0;
@@ -777,11 +971,12 @@
     }
 
     console.log(
-      '%cGradient Reader%c ' + state.units.length + ' blocks, ' + lines +
-      ' visual lines, ' + state.spanCount + ' spans of ' + state.chunkSize +
-      ' characters. First paint ' + Math.round(state.firstPaintMs) + 'ms.' +
+      '%cGradient Reader%c first paint ' + Math.round(state.firstPaintMs) +
+      'ms — ' + state.units.length + ' blocks, ' + lines + ' visual lines, ' +
+      state.spanCount + ' spans of ' + state.chunkSize + ' characters. ' +
+      'The rest of the page is wrapped as you scroll to it.' +
       (state.degraded
-        ? ' Node budget reached — the rest of the page was left untreated.'
+        ? ' Node budget reached — the far end of the page will be left plain.'
         : ''),
       'font-weight:600', 'font-weight:400'
     );

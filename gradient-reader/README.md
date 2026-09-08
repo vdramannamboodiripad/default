@@ -85,9 +85,15 @@ at no words per minute at all. Completion is the thing.
 ## When something looks wrong
 
 Press F12, open **Console**, and turn the gradient on. It prints one line: how
-many blocks, how many visual lines, how many spans, and how long the first paint
-took. Nothing else, ever — an extension whose job is to help you stay on a page
-has no business interrupting you.
+long the first paint took, and how many blocks, visual lines and spans that
+covered. Nothing else, ever — an extension whose job is to help you stay on a
+page has no business interrupting you.
+
+The counts are the screenful you are looking at, not the whole article, because
+the rest is deliberately left until you scroll to it. That is also what makes
+the millisecond figure worth reading: it should be about the same on a 500 word
+page and a 5,000 word one. If it grows with the length of the article,
+something is processing everything up front and that is a bug.
 
 - **Nothing happened.** The page probably did not look like an article. The
   popup says so. Pressing the button anyway works.

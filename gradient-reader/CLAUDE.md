@@ -40,9 +40,19 @@ These are not preferences. Breaking one is a bug, not a tradeoff.
    Every palette must pass `test/check-engine.js`, which simulates deuteranopia
    and protanopia and fails the build if neighbouring stops collapse together.
    Adding a palette means running that.
-7. **Never interrupt.** No nudges, no streaks, no notifications, no on-page
-   badge. One line in the console when a page finishes, and nothing else.
-8. **Accessibility features are never paywalled.**
+7. **No palette has the page's ink as a stop.** Only `mono` does, and only
+   because a lightness ramp has to be anchored somewhere real. Putting the ink
+   in a ramp seems obviously right — every paragraph opens in the colour the
+   reader expects — and it is what the first version did. On screen it puts a
+   fade to near-black on one line in every two, three or four, and the result
+   reads as muddy rather than restrained: blue, blue, black instead of three
+   colours. Removing it took the default palette's worst-case separation from
+   20 to 37. **Quiet is the strength slider's job**, by mixing every stop
+   towards the ink. An ink stop in the ramp is not the same thing and is not a
+   substitute.
+8. **Never interrupt.** No nudges, no streaks, no notifications, no on-page
+   badge. One line in the console at first paint, and nothing else.
+9. **Accessibility features are never paywalled.**
 
 ## On committing
 
@@ -81,6 +91,15 @@ decide. Do not just build it.
    convenient loop makes the browser re-lay-out the page once per span and the
    tab freezes on a long article. This is the single easiest way to ruin this
    extension and it looks like a tidy-up.
+   - But note what is *not* the bottleneck. The first version routed the very
+     first batch — the screenful the reader is staring at — through an
+     `IntersectionObserver` callback and then a `requestIdleCallback`, and it
+     felt slow for reasons unrelated to how much work there was: an
+     intersection callback waits for the next layout, and an idle callback can
+     sit for its whole timeout. Two waits in front of a few milliseconds of
+     work. `startWork()` now paints what is on screen synchronously and only
+     defers the rest. Deferring is right for the ten screenfuls below the
+     fold and wrong for the one in front of you.
 2. **The text must come out exactly as it went in.** `splitIntoPieces()` must
    reproduce its input character for character, keep whitespace out of wrapped
    spans, and never split a grapheme cluster. That property is what keeps
@@ -95,6 +114,13 @@ decide. Do not just build it.
 4. **Re-measure, never re-wrap, on reflow.** Wrapping is the expensive half and
    the spans stay correct when lines move. `remeasureAll()` and `repaintAll()`
    are separate for this reason and should stay separate.
+   - Two related traps, both of which were in the first version. The
+     `ResizeObserver` fires once immediately on `observe()`, by specification,
+     and that callback re-measured every span for nothing moments after the
+     first paint — hence `state.sawFirstResize`. And `rescan()` used to walk
+     the entire article on every burst of mutations, which on a page that
+     mutates steadily is a treadmill running the whole time the extension is
+     on; it now walks only the subtrees the MutationObserver named.
 5. **The colour cycle restarts at every block.** Not an aesthetic choice —
    blocks are wrapped as they scroll into view, so a continuous count would
    shift colours under the reader. It also happens to read better, because
@@ -119,10 +145,20 @@ decide. Do not just build it.
   makes the colour invisible.
 - **A site with `!important` on `color`** beats us and the gradient will not
   appear. There is nothing further to be done about that.
-- **Framework re-renders** can wipe the spans. The debounced MutationObserver
-  puts them back within about half a second. A framework that re-renders
-  continuously will fight this and the honest answer is to turn the extension
-  off for that site.
+- **Framework re-renders** wipe the spans, and `rescan()` puts them back within
+  about half a second. It notices in two ways: the block no longer contains any
+  `span.gr-c`, or its text is a different length from `unit.characters`, which
+  is what was recorded when it was wrapped. The second case catches a partial
+  re-render that inserted words between spans that are still there. Both
+  depend on wrapping preserving the text exactly, so if that ever stops being
+  true this breaks too, silently. A framework that re-renders continuously
+  will fight this, and the honest answer there is to turn the extension off
+  for that site.
+  - **This used to be a lie.** The first version marked a block treated and
+    never looked at it again, so one re-render lost that paragraph's gradient
+    permanently — while this file claimed the observer put it back. If you
+    change how `state.treated` is maintained, check this claim is still true
+    rather than assuming it.
 - **`isContentEditable` and the skip list in `detect.js`** are the only things
   standing between this and a corrupted form submission. Additions to that list
   are cheap; removals are not.

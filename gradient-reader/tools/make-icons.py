@@ -23,14 +23,15 @@ import zlib
 PAPER = (251, 251, 249)
 RULE = (222, 222, 214)
 
-# The Bright palette from palettes.js. Blue, amber and teal — the three
-# directions that stay distinct under deuteranopia and protanopia, which is
-# also what makes them stay distinct at sixteen pixels.
+# The Bright palette from palettes.js, which is also the shipping default.
+# Blue, amber, teal and navy — the directions that stay distinct under
+# deuteranopia and protanopia, which is also what makes them stay distinct at
+# sixteen pixels.
 STOPS = [
-    (27, 27, 26),     # ink
-    (10, 88, 194),    # blue
-    (143, 71, 0),     # amber
-    (14, 111, 120),   # teal
+    (42, 110, 224),   # blue
+    (138, 67, 0),     # amber
+    (15, 125, 110),   # teal
+    (43, 47, 94),     # navy
 ]
 
 SUPERSAMPLE = 4

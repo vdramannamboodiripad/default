@@ -195,13 +195,14 @@
         wanted.push(mix(ink, paper, steps[i]));
       }
     } else {
+      // Every stop is a real colour. The page's own ink is not one of them —
+      // see the note at the top of palettes.js: an ink stop in the ramp puts a
+      // fade to near-black on one line in every few, and reads as muddy rather
+      // than restrained. Quiet is what the strength slider is for, and it gets
+      // there by mixing towards the ink rather than by landing on it.
       for (i = 0; i < palette.stops.length; i++) {
         wanted.push(hexToRgb(palette.stops[i]));
       }
-      // Stop 0 is meant to be the reading ink. Use the page's real ink rather
-      // than the palette's guess at it, so a site with brown or navy body text
-      // keeps its own character.
-      wanted[0] = ink;
     }
 
     var count = Math.max(2, Math.min(cycle || 3, wanted.length));

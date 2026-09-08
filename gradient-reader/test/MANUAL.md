@@ -118,6 +118,7 @@ Open `test/fixtures/long.html` (3,045 words).
 | Check | Budget |
 | --- | --- |
 | First paint, from the console line | under **100ms** |
+| Same number on `article.html`, which is a sixth of the length | within a few ms of it — first paint covers one screenful either way |
 | Scrolling to the bottom | stays smooth; new text arrives coloured |
 | DevTools → Performance, record while turning it on | no task over ~32ms (two frames) |
 | Ctrl+`+` to zoom, three steps | colour re-flows to the new line breaks, no stall |
@@ -143,6 +144,11 @@ short version:
 - [ ] **Append three paragraphs** → they colour within about half a second, and
       nothing already painted changes
 - [ ] **Replace the article** → the new text colours
+- [ ] **Re-render paragraph 1 in place** → its colour goes, then comes back
+      within about half a second. Staying plain means a framework re-render
+      loses that paragraph for good.
+- [ ] **Insert a word into paragraph 2** → the whole paragraph recolours, the
+      new sentence included
 - [ ] Narrowing the window re-flows the colour
 - [ ] Turning it off returns everything, appended paragraphs included, to plain
 

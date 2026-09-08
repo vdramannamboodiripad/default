@@ -213,10 +213,17 @@ for (const cycle of [2, 3, 4]) {
          endOfLine + ' then ' + startOfNext);
     }
 
-    // The cycle really cycles: line 0 and line `cycle` start the same.
-    ok(colours[lines[0].from] === colours[lines[cycle].from],
-       'the cycle repeats after ' + cycle + ' lines at strength ' + strength,
-       colours[lines[0].from] + ' then ' + colours[lines[cycle].from]);
+    // The cycle really cycles: line 0 and line `ramp.length` start the same.
+    //
+    // Measured against the ramp rather than the requested cycle, because a
+    // palette may ship fewer stops than were asked for. Where a fourth
+    // genuinely distinct stop is not available, three real colours beat four
+    // where two of them are the same colour — so the engine hands back three
+    // and the cycle is three long.
+    ok(colours[lines[0].from] === colours[lines[ramp.length].from],
+       'the cycle repeats after ' + ramp.length + ' lines (asked for ' + cycle +
+       ') at strength ' + strength,
+       colours[lines[0].from] + ' then ' + colours[lines[ramp.length].from]);
   }
 }
 
