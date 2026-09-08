@@ -40,19 +40,25 @@ These are not preferences. Breaking one is a bug, not a tradeoff.
    Every palette must pass `test/check-engine.js`, which simulates deuteranopia
    and protanopia and fails the build if neighbouring stops collapse together.
    Adding a palette means running that.
-7. **No palette has the page's ink as a stop.** Only `mono` does, and only
-   because a lightness ramp has to be anchored somewhere real. Putting the ink
-   in a ramp seems obviously right — every paragraph opens in the colour the
-   reader expects — and it is what the first version did. On screen it puts a
-   fade to near-black on one line in every two, three or four, and the result
-   reads as muddy rather than restrained: blue, blue, black instead of three
-   colours. Removing it took the default palette's worst-case separation from
-   20 to 37. **Quiet is the strength slider's job**, by mixing every stop
-   towards the ink. An ink stop in the ramp is not the same thing and is not a
-   substitute.
-8. **Never interrupt.** No nudges, no streaks, no notifications, no on-page
+7. **No palette has the page's ink as a stop.** Putting the ink in a ramp
+   seems obviously right — every paragraph opens in the colour the reader
+   expects — and it is what the first version did. On screen it puts a fade to
+   near-black on one line in every two, three or four, and the result reads as
+   muddy rather than restrained: blue, blue, black instead of three colours.
+   Removing it took the default palette's worst-case separation from 20 to 37.
+   **Quiet is the strength slider's job**, by mixing every stop towards the
+   ink. An ink stop in the ramp is not the same thing and is not a substitute.
+8. **Dark pages get the dark-paper palette, and there is no setting for it.**
+   The tempting simplification — let the contrast floor lighten whichever
+   palette was chosen — is refused, and `test/check-engine.js` asserts that it
+   has to be: lightened for dark paper, the default palette's stops squeeze to
+   a separation of 9.9 against a bar of 12. Not every palette collapses, which
+   is why the check is "at least one does, and it is the default" rather than
+   "they all do". The first version of that check claimed they all do and was
+   wrong about two of three.
+9. **Never interrupt.** No nudges, no streaks, no notifications, no on-page
    badge. One line in the console at first paint, and nothing else.
-9. **Accessibility features are never paywalled.**
+10. **Accessibility features are never paywalled.**
 
 ## On committing
 

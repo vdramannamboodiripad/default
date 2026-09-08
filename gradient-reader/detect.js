@@ -229,18 +229,29 @@
     return linked / total;
   }
 
-  /* Score one candidate container. Prose length minus anything that says
-   * "this is a list of things", not a similarity measure — the numbers are
-   * counts of real characters and real paragraphs. */
-  function proseCharacters(element) {
+  /* Score one candidate container. Prose length and paragraph count — real
+   * counts of real characters, never a similarity measure.
+   *
+   * `enough` is an early exit. Nothing here needs to know that a container has
+   * 40,000 characters of prose rather than 5,000; it needs to know the
+   * container clears the bar and roughly how it compares to its rivals. Since
+   * candidates nest, the same text gets measured several times over, and
+   * without a cap that means reading textContent across most of the document
+   * once per candidate. Where two containers both hit the cap the tie goes to
+   * whichever was tried first, which is the tighter selector — the one we
+   * wanted anyway. */
+  function proseCharacters(element, enough) {
     var paragraphs = element.querySelectorAll('p, li, blockquote');
+    var limit = enough || Infinity;
     var characters = 0;
     var counted = 0;
+
     for (var i = 0; i < paragraphs.length; i++) {
       var text = (paragraphs[i].textContent || '').replace(/\s+/g, ' ').trim();
       if (text.length >= 60) {
         characters += text.length;
         counted++;
+        if (characters >= limit) break;
       }
     }
     return { characters: characters, paragraphs: counted };
@@ -256,39 +267,51 @@
    *                   whether they want this here.
    */
   function findArticleRoot(doc, minCharacters, minParagraphs) {
-    var best = null;
-    var bestScore = 0;
+    if (!doc.body) return null;
 
-    for (var i = 0; i < ARTICLE_SELECTORS.length; i++) {
+    var enough = minCharacters * 4;
+    var seen = new Set();
+    var qualifying = [];
+    var i, j;
+
+    /* Measure each candidate once. An element that matches three of the
+     * selectors below used to be measured three times; `seen` is what stops
+     * that. Link density is deliberately not measured here — it is the
+     * expensive test and most candidates never need it. */
+    for (i = 0; i < ARTICLE_SELECTORS.length; i++) {
       var candidates = doc.querySelectorAll(ARTICLE_SELECTORS[i]);
-      for (var j = 0; j < candidates.length; j++) {
+      for (j = 0; j < candidates.length; j++) {
         var element = candidates[j];
-        if (!element.isConnected) continue;
+        if (!element.isConnected || seen.has(element)) continue;
+        seen.add(element);
 
-        var measured = proseCharacters(element);
+        var measured = proseCharacters(element, enough);
         if (measured.characters < minCharacters) continue;
         if (measured.paragraphs < minParagraphs) continue;
-        if (linkDensity(element) > 0.45) continue;
-
-        // Prefer the container with the most prose. Where a nested candidate
-        // and its parent tie, the earlier selector in the list wins, which is
-        // the tighter one.
-        if (measured.characters > bestScore * 1.05) {
-          best = element;
-          bestScore = measured.characters;
-        }
+        qualifying.push({ element: element, score: measured.characters });
       }
     }
 
-    if (best) return best;
+    // Some perfectly readable pages are a stylesheet and a stack of <p> with
+    // no wrapper at all, so the body is a candidate of last resort.
+    if (!seen.has(doc.body)) {
+      var bodyProse = proseCharacters(doc.body, enough);
+      if (bodyProse.characters >= minCharacters &&
+          bodyProse.paragraphs >= minParagraphs) {
+        qualifying.push({ element: doc.body, score: bodyProse.characters });
+      }
+    }
 
-    // No container matched, so try the body itself. Some perfectly readable
-    // pages are a stylesheet and a stack of <p> with no wrapper at all.
-    var bodyProse = proseCharacters(doc.body);
-    if (bodyProse.characters >= minCharacters &&
-        bodyProse.paragraphs >= minParagraphs &&
-        linkDensity(doc.body) <= 0.45) {
-      return doc.body;
+    /* Most prose wins. Array.prototype.sort is stable, so candidates that tied
+     * at the cap stay in the order they were tried, which is tightest selector
+     * first. Only now is link density measured, and only until one candidate
+     * passes: a page of headlines scores well on prose and has to be caught,
+     * but reading every link in every candidate to find that out is the one
+     * genuinely expensive thing in this file. */
+    qualifying.sort(function (a, b) { return b.score - a.score; });
+
+    for (i = 0; i < qualifying.length; i++) {
+      if (linkDensity(qualifying[i].element) <= 0.45) return qualifying[i].element;
     }
 
     return null;

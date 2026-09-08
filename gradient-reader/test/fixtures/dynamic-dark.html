@@ -38,12 +38,15 @@
 <aside>
   <ol>
     <li><b>Dark paper.</b> Turn the gradient on. It must switch to the
-      <i>Night</i> palette by itself. If the text goes dark on this dark
+      dark-paper palette by itself. If the text goes dark on this dark
       background, the automatic switch is broken — and that is not a subtle
       failure, it is an unreadable page.</li>
-    <li><b>Deliberate choice wins.</b> Pick <i>Mono</i> in the popup. It must
-      stay on Mono, mixed from this page's own light ink towards its dark paper.
-      The switch is only allowed to override a palette meant for light paper.</li>
+    <li><b>The choice does not apply here.</b> Switch between <i>Bright</i>,
+      <i>Deep</i> and <i>Contrast</i> in the popup. Nothing on this page should
+      change. Dark pages always get the dark-paper palette, because lightening
+      a daytime palette enough to read on black squeezes its stops together —
+      the default one ends up below the point where two stops read as different
+      colours at all.</li>
     <li><b>New content.</b> Press <i>Append three paragraphs</i>. They should
       colour by themselves within about half a second, without touching
       anything that was already painted.</li>
@@ -82,8 +85,8 @@
   <p>The same measurement feeds the contrast floor. Every colour stop is pulled
   back towards the ink until it clears four and a half to one against whatever
   paper was found, so a palette cannot quietly hand somebody grey text on a
-  grey background, and the palest stop of the lightness-only palette adapts
-  instead of being wrong on half the web.</p>
+  grey background, and a palette written against plain white still works on a
+  site with a cream or light grey one.</p>
 </div>
 
 <div class="controls">

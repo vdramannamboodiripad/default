@@ -29,7 +29,7 @@
    *              read as the ink and paper, so whatever CSS the surrounding
    *              page uses is what the specimen is measured against.
    *   text       paragraphs separated by blank lines.
-   *   settings   palette, cycle, strength, autoNight.
+   *   settings   palette, cycle, strength.
    *
    * Returns how many visual lines were painted, which is worth showing: a
    * passage that fits on three lines is not showing the reader anything about
@@ -67,14 +67,8 @@
     }
     if (!paper) paper = [255, 255, 255];
 
-    var name = settings.palette;
-    if (settings.autoNight && engine.isDark(paper)) {
-      var palette = NS.palettes.PALETTES[name];
-      if (palette && palette.for === 'light') name = 'night';
-    } else if (name === 'night' && !engine.isDark(paper)) {
-      name = 'blues';
-    }
-
+    // Same rule as a real page: dark paper gets the dark-paper palette.
+    var name = engine.isDark(paper) ? NS.palettes.DARK_PALETTE : settings.palette;
     var ramp = engine.buildRamp(name, ink, paper, settings.cycle);
 
     /* --- measure, then colour. Reads before writes, same as everywhere. --- */
@@ -100,15 +94,11 @@
    * substitute for the specimen — just enough to tell the palettes apart in a
    * list. Drawn as a CSS gradient so it costs nothing. */
   function rampCss(name, cycle) {
-    var ink = [27, 27, 26];
-    var paper = [251, 251, 249];
-
-    if (matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) {
-      ink = [217, 219, 224];
-      paper = [20, 22, 26];
-    }
-
-    var ramp = engine.buildRamp(name, ink, paper, cycle);
+    /* Judged against light paper whatever the interface theme is, because these
+     * strips label the light-paper palettes and that is what those stops are.
+     * Showing them lightened for a dark panel would be showing colours the
+     * palette never actually paints. */
+    var ramp = engine.buildRamp(name, [27, 27, 26], [251, 251, 249], cycle);
     var stops = [];
     for (var i = 0; i <= ramp.length; i++) {
       var colour = engine.rgbToCss(ramp[i % ramp.length]);

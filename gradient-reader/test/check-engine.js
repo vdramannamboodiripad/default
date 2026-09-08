@@ -201,7 +201,7 @@ for (const cycle of [2, 3, 4]) {
     const boxes = paragraph(9, 7);
     const lines = engine.groupLines(boxes);
     const ink = [27, 27, 26];
-    const ramp = engine.buildRamp('blues', ink, [255, 255, 255], cycle);
+    const ramp = engine.buildRamp('bright', ink, [255, 255, 255], cycle);
     const colours = engine.computeColours(boxes, lines, { ramp, strength, ink });
 
     for (let i = 0; i < lines.length - 1; i++) {
@@ -245,7 +245,7 @@ for (const cycle of [2, 3, 4]) {
   const boxes = [box(0, 0, 30), box(0, 30, 30), box(24, 0, 30)];
   const lines = engine.groupLines(boxes);
   const ink = [27, 27, 26];
-  const ramp = engine.buildRamp('blues', ink, [255, 255, 255], 3);
+  const ramp = engine.buildRamp('bright', ink, [255, 255, 255], 3);
   const colours = engine.computeColours(boxes, lines, { ramp, strength: 1, ink });
   ok(colours[1] === colours[2],
      'a single-span line continues from the line above',
@@ -260,7 +260,7 @@ for (const cycle of [2, 3, 4]) {
                  box(24, 300, 28), box(24, 260, 28), box(24, 220, 28)];
   const lines = engine.groupLines(boxes);
   const ink = [27, 27, 26];
-  const ramp = engine.buildRamp('blues', ink, [255, 255, 255], 3);
+  const ramp = engine.buildRamp('bright', ink, [255, 255, 255], 3);
   const colours = engine.computeColours(boxes, lines, { ramp, strength: 1, ink });
   ok(colours[2] === colours[3],
      'continuity holds in right-to-left text',
@@ -283,10 +283,15 @@ const PAPERS = [
   ['grey site', [238, 238, 238], [51, 51, 51]]
 ];
 
-for (const name of palettes.PALETTE_ORDER) {
+/* The pickable palettes plus the dark-paper one, which is never pickable but
+ * is what gets painted on half the web. */
+const ALL_PALETTES = palettes.PALETTE_ORDER.concat([palettes.DARK_PALETTE]);
+
+for (const name of ALL_PALETTES) {
   for (const [paperName, paper, ink] of PAPERS) {
-    // Night is for dark paper and the others are for light; the extension
-    // switches between them, so only test each where it is actually used.
+    // The dark-paper palette is for dark paper and the others are for light;
+    // the extension switches between them, so only test each where it is
+    // actually used.
     const palette = palettes.PALETTES[name];
     const paperIsDark = engine.isDark(paper);
     if (palette.for === 'light' && paperIsDark) continue;
@@ -406,7 +411,7 @@ function deltaE(a, b) {
  * "different colour" and well short of demanding they clash. */
 const MIN_DELTA_E = 12;
 
-for (const name of palettes.PALETTE_ORDER) {
+for (const name of ALL_PALETTES) {
   const palette = palettes.PALETTES[name];
   const paperIsDark = palette.for === 'dark';
   const paper = paperIsDark ? [20, 22, 26] : [251, 251, 249];
@@ -436,6 +441,98 @@ for (const name of palettes.PALETTE_ORDER) {
       }
     }
   }
+}
+
+/* ===========================================================================
+ * 5b. NO COLOUR VISION AT ALL
+ *
+ * Complete colour blindness is rare, and the palettes above are no use for it:
+ * they are built to sit near the contrast floor, which makes them close to
+ * iso-luminant, and once hue is gone there is nothing left to tell the stops
+ * apart. The lightness-only palette used to be the answer; the Contrast
+ * palette replaces it by stepping through distinct lightness levels as well as
+ * distinct hues, which is strictly better because it also works for readers
+ * who do see hue.
+ *
+ * "Distinct levels" rather than "alternating light and dark" is the load-
+ * bearing part, and it is not obvious. A cycle of odd length cannot alternate
+ * between two states — with three stops, dark/light/dark closes the loop by
+ * pairing two darks — so a palette built on alternation loses the whole effect
+ * at cycle 3. Three or four separated levels work at every cycle length.
+ * ========================================================================= */
+
+section('The Contrast palette works with no colour vision at all');
+
+const LIGHTNESS_PALETTE = 'contrast';
+const MIN_DELTA_L = 10;
+
+function lightness(colour) {
+  return toLab(colour)[0];
+}
+
+for (const [paperName, paper, ink] of PAPERS) {
+  if (engine.isDark(paper)) continue;   // this palette is for light paper
+
+  for (const cycle of [2, 3, 4]) {
+    const ramp = engine.buildRamp(LIGHTNESS_PALETTE, ink, paper, cycle);
+    for (let i = 0; i < ramp.length; i++) {
+      const next = (i + 1) % ramp.length;
+      const difference = Math.abs(lightness(ramp[i]) - lightness(ramp[next]));
+      ok(difference >= MIN_DELTA_L,
+         LIGHTNESS_PALETTE + ' stops ' + i + ' and ' + next + ' of ' + cycle +
+         ' differ in lightness alone on ' + paperName + ' paper',
+         'delta L ' + difference.toFixed(1) + ', needs ' + MIN_DELTA_L);
+    }
+  }
+}
+
+/* And a guard on the claim in palettes.js that a light palette cannot simply
+ * be lightened to fit a dark page. If this ever stops being true, the
+ * dark-paper palette could be dropped — but it is true, by a wide margin, and
+ * the tempting simplification has to stay refused. */
+section('A light palette cannot be adapted to dark paper by the contrast floor');
+
+{
+  const darkPaper = [20, 22, 26];
+  const darkInk = [217, 219, 224];
+  const onDark = {};
+
+  for (const name of palettes.PALETTE_ORDER) {
+    const ramp = engine.buildRamp(name, darkInk, darkPaper, 4);
+    let worst = Infinity;
+    for (const matrix of Object.values(SIMULATIONS)) {
+      for (let i = 0; i < ramp.length; i++) {
+        const next = (i + 1) % ramp.length;
+        worst = Math.min(worst, deltaE(
+          simulate(ramp[i], matrix), simulate(ramp[next], matrix)));
+      }
+    }
+    onDark[name] = worst;
+  }
+
+  /* Not every palette collapses — Contrast barely notices, because its stops
+   * span a wide lightness range that the floor cannot squeeze together, and
+   * Deep survives washed out. The first draft of this test asserted they all
+   * collapse and was wrong about two of the three.
+   *
+   * What matters is that it cannot be relied on: as long as any pickable
+   * palette drops below the safety threshold when lightened, "just lighten
+   * whatever the reader chose" is not a design, and the shipped default is the
+   * one that fails hardest. */
+  const worstOfAll = Math.min(...Object.values(onDark));
+  const summary = Object.keys(onDark)
+    .map((name) => name + ' ' + onDark[name].toFixed(1))
+    .join(', ');
+
+  ok(worstOfAll < MIN_DELTA_E,
+     'at least one pickable palette is unsafe when merely lightened for dark paper',
+     'separation on dark paper: ' + summary + '. If every one of these ever ' +
+     'clears ' + MIN_DELTA_E + ', the separate dark palette could be dropped.');
+
+  ok(onDark[palettes.PALETTE_ORDER[0]] < MIN_DELTA_E,
+     'and the default palette is among them',
+     palettes.PALETTE_ORDER[0] + ' separates by only ' +
+     onDark[palettes.PALETTE_ORDER[0]].toFixed(1) + ' on dark paper');
 }
 
 /* ===========================================================================

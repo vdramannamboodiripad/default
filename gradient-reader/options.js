@@ -170,7 +170,6 @@
 
     $('paper').value = current.paper;
     $('face').value = current.face;
-    $('autoNight').checked = !!current.autoNight;
     $('linkUnderline').checked = !!current.linkUnderline;
     $('autoRun').checked = !!current.autoRun;
 
@@ -219,22 +218,29 @@
     var host = $('sheet');
     host.textContent = '';
 
-    // Judged against this page's own paper, so the swatches are honest about
-    // what the contrast floor does to them here.
-    var dark = matchMedia('(prefers-color-scheme: dark)').matches;
-    var ink = dark ? [220, 222, 227] : [27, 27, 26];
-    var paper = dark ? [22, 24, 28] : [251, 251, 249];
+    /* The dark-paper palette is shown here too, even though it is not in the
+     * picker, because it is what you will actually see on half the web and
+     * hiding it would make the sheet a lie about what the extension paints. */
+    var names = palettes.PALETTE_ORDER.concat([palettes.DARK_PALETTE]);
 
-    for (var i = 0; i < palettes.PALETTE_ORDER.length; i++) {
-      var name = palettes.PALETTE_ORDER[i];
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
       var palette = palettes.PALETTES[name];
+
+      // Each palette judged against the paper it is actually for, so the
+      // swatches are honest about what the contrast floor does to them.
+      var onDark = palette.for === 'dark';
+      var ink = onDark ? [217, 219, 224] : [27, 27, 26];
+      var paper = onDark ? [20, 22, 26] : [251, 251, 249];
       var ramp = engine.buildRamp(name, ink, paper, 4);
 
       var card = document.createElement('div');
       card.className = 'card';
+      if (onDark) card.dataset.paper = 'dark';
 
       var title = document.createElement('h3');
-      title.textContent = palette.label;
+      title.textContent = palette.label +
+        (onDark ? ' — used automatically on dark pages' : '');
       card.appendChild(title);
 
       var stops = document.createElement('div');
@@ -436,11 +442,6 @@
     current.face = event.target.value;
     $('faceNote').textContent = faceNote(current.face);
     onLayoutChange();
-  });
-
-  $('autoNight').addEventListener('change', function (event) {
-    current.autoNight = event.target.checked;
-    onColourChange();
   });
 
   $('linkUnderline').addEventListener('change', function (event) {

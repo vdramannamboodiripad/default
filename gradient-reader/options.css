@@ -386,6 +386,15 @@ code {
   font-weight: 600;
 }
 
+/* The dark-paper palette gets dark paper to sit on, since its stops were
+   picked against that and nothing else. */
+.card[data-paper="dark"] {
+  background: #14161a;
+  border-color: #2a2e36;
+}
+.card[data-paper="dark"] h3 { color: #d9dbe0; }
+.card[data-paper="dark"] p { color: #9096a0; }
+
 .card .stops {
   display: flex;
   height: 20px;

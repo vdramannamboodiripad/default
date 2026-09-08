@@ -158,9 +158,9 @@
    * the paper. The ink is the page's own text colour, so it always passes; that
    * makes it a safe direction to retreat in.
    *
-   * This is why mono can be written with optimistic stops in palettes.js. On
-   * white paper the palest one would be too faint to read, and this quietly
-   * darkens it instead of shipping grey-on-white. */
+   * It is what lets a palette be written against plain white and still work on
+   * a site with a light grey or cream background, where a stop picked for white
+   * would be a shade too faint. */
   function enforceContrast(colour, ink, paper) {
     if (contrastRatio(colour, paper) >= MIN_CONTRAST) return colour;
 
@@ -182,29 +182,22 @@
    */
   function buildRamp(name, ink, paper, cycle) {
     var palette = palettes.PALETTES[name];
-    if (!palette) palette = palettes.PALETTES.blues;
+    if (!palette) palette = palettes.PALETTES[palettes.PALETTE_ORDER[0]];
 
+    // Every stop is a real colour. The page's own ink is not one of them —
+    // see the note at the top of palettes.js: an ink stop in the ramp puts a
+    // fade to near-black on one line in every few, and reads as muddy rather
+    // than restrained. Quiet is what the strength slider is for, and it gets
+    // there by mixing towards the ink rather than by landing on it.
     var wanted = [];
     var i;
-
-    if (palette.derive === 'luminance') {
-      // Mono: walk from the ink towards the paper. Works on dark pages as well
-      // as light ones, because "towards the paper" flips with the paper.
-      var steps = palettes.MONO_STEPS;
-      for (i = 0; i < steps.length; i++) {
-        wanted.push(mix(ink, paper, steps[i]));
-      }
-    } else {
-      // Every stop is a real colour. The page's own ink is not one of them —
-      // see the note at the top of palettes.js: an ink stop in the ramp puts a
-      // fade to near-black on one line in every few, and reads as muddy rather
-      // than restrained. Quiet is what the strength slider is for, and it gets
-      // there by mixing towards the ink rather than by landing on it.
-      for (i = 0; i < palette.stops.length; i++) {
-        wanted.push(hexToRgb(palette.stops[i]));
-      }
+    for (i = 0; i < palette.stops.length; i++) {
+      wanted.push(hexToRgb(palette.stops[i]));
     }
 
+    // A palette may ship fewer stops than were asked for, where a fourth
+    // genuinely distinct one is not available. Three real colours beat four
+    // where two of them are the same colour.
     var count = Math.max(2, Math.min(cycle || 3, wanted.length));
     var ramp = [];
     for (i = 0; i < count; i++) {

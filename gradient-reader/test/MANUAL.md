@@ -3,7 +3,7 @@
 `node gradient-reader/test/check-engine.js` covers the arithmetic: that text
 comes out of the wrapper exactly as it went in, that the colour ending one line
 begins the next, that every palette survives deuteranopia and protanopia, and
-that every colour clears 4.5:1 against the paper. 3,300-odd checks, all of them
+that every colour clears 4.5:1 against the paper. 2,800-odd checks, all of them
 against the real shipping code.
 
 None of it says the extension works. Injection, find-in-page, screen readers,
@@ -138,9 +138,10 @@ post — because a fixture cannot reproduce the mess of a real page.
 Open `test/fixtures/dynamic-dark.html`. The instructions are in the page; the
 short version:
 
-- [ ] Turning it on switches to **Night** by itself
-- [ ] Choosing **Mono** deliberately sticks, and is mixed from this page's own
-      light ink
+- [ ] Turning it on switches to the dark-paper palette by itself
+- [ ] Switching between **Bright**, **Deep** and **Contrast** in the popup
+      changes nothing here — dark pages always get the dark-paper palette, and
+      that is deliberate
 - [ ] **Append three paragraphs** → they colour within about half a second, and
       nothing already painted changes
 - [ ] **Replace the article** → the new text colours

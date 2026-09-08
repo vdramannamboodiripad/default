@@ -136,11 +136,12 @@
     }
   }
 
-  function drawAll() {
+  /* Everything that comes from storage. Deliberately separate from
+   * drawPageState, which is the only part that depends on the tab. */
+  function drawSettings() {
     drawPalettes();
     drawControls();
     drawSpecimen();
-    drawPageState();
   }
 
   /* ---------------------------------------------------------------------
@@ -270,29 +271,50 @@
    * START
    * ------------------------------------------------------------------ */
 
+  /* Draw as soon as there is anything to draw, and never wait on the page.
+   *
+   * The first version did the opposite: it asked the tab what it was doing and
+   * drew nothing at all until the answer came back. That is why opening the
+   * popup felt slow. Two waits were stacked in front of the first pixel — the
+   * message round-trip to the content script, and, if the script was there and
+   * idle, a full article detection pass that ran on demand inside it.
+   *
+   * None of the panel needs that answer. The specimen, the palettes and the
+   * sliders come from storage and are the whole reason for opening the popup.
+   * Only the on/off button's wording depends on the tab, so only that waits,
+   * and it waits with a sensible label rather than a blank panel. */
   function start() {
-    Promise.all([
-      chrome.tabs.query({ active: true, currentWindow: true }),
-      settingsApi.load()
-    ]).then(function (results) {
-      var tab = results[0][0];
-      var stored = results[1];
-
+    settingsApi.load().then(function (stored) {
       sites = stored.sites;
+      current = settingsApi.withDefaults(stored.settings);
+      drawSettings();
+      return chrome.tabs.query({ active: true, currentWindow: true });
+    }).then(function (tabs) {
+      var tab = tabs[0];
       page.tabId = tab ? tab.id : null;
       page.host = tab ? settingsApi.hostOf(tab.url) : null;
       page.reachable = !!page.host;
 
-      current = settingsApi.forHost(stored.settings, sites, page.host);
+      // Now that the host is known, per-site overrides may change the controls.
+      return chrome.storage.local.get(['settings', 'sites']).then(function (raw) {
+        var merged = settingsApi.forHost(raw.settings, raw.sites || {}, page.host);
+        var changed = false;
+        for (var key in merged) {
+          if (Object.prototype.hasOwnProperty.call(merged, key) &&
+              merged[key] !== current[key]) {
+            changed = true;
+          }
+        }
+        current = merged;
+        if (changed) drawSettings();
+        drawPageState();
+      });
+    }).then(function () {
+      if (!page.reachable || page.tabId === null) return;
 
-      if (!page.reachable || page.tabId === null) {
-        drawAll();
-        return;
-      }
-
-      // Ask the page what it is doing. No answer means no content script yet,
-      // which is not an error — it is the normal state of a page nobody has
-      // pressed the button on.
+      // Ask the page what it is doing, and update the button when it answers.
+      // No answer means no content script yet, which is not an error — it is
+      // the normal state of a page nobody has pressed the button on.
       chrome.tabs.sendMessage(page.tabId, { type: 'status' }, function (reply) {
         void chrome.runtime.lastError;
         if (reply && reply.ok) {
@@ -301,7 +323,7 @@
           page.hasArticle = reply.hasArticle;
           page.autoAllowed = reply.autoAllowed;
         }
-        drawAll();
+        drawPageState();
       });
     });
   }

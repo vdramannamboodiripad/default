@@ -30,12 +30,16 @@
 (function () {
   'use strict';
 
+  /* Declared up here rather than at the bottom because withDefaults reads it.
+   * `var` hoisting would have made it work either way, which is exactly the
+   * kind of thing not to rely on. */
+  var root = typeof globalThis !== 'undefined' ? globalThis : window;
+
   var DEFAULTS = {
     /* --- the gradient --------------------------------------------------- */
     palette: 'bright',
     cycle: 3,          // how many colour stops in the cycle: 2, 3 or 4
     strength: 45,      // percent. 0 leaves the text alone entirely.
-    autoNight: true,   // switch to the Night palette on dark pages
 
     /* --- legibility ------------------------------------------------------
      * 0 means "leave the site's own value alone", which is the default for
@@ -83,13 +87,28 @@
   };
 
   /* Take a settings object off storage and fill in anything missing, so an
-   * older stored record still works after a new setting is added. */
+   * older stored record still works after a new setting is added — or after
+   * one is taken away. */
   function withDefaults(stored) {
     var out = {};
     for (var key in DEFAULTS) {
       if (!Object.prototype.hasOwnProperty.call(DEFAULTS, key)) continue;
       out[key] = (stored && stored[key] !== undefined) ? stored[key] : DEFAULTS[key];
     }
+
+    /* A palette that has since been removed, or the dark-paper palette saved
+     * back when it was pickable, becomes the default.
+     *
+     * The engine already falls back safely on an unknown name, so without this
+     * the gradient would look right while the popup showed no palette selected
+     * at all — the worst kind of small bug, because everything works and
+     * nothing makes sense. Looked up lazily because palettes.js loads after
+     * this file. */
+    var table = root.GradientReader && root.GradientReader.palettes;
+    if (table && table.PALETTE_ORDER.indexOf(out.palette) < 0) {
+      out.palette = DEFAULTS.palette;
+    }
+
     return out;
   }
 
@@ -187,7 +206,6 @@
     originPattern: originPattern
   };
 
-  var root = typeof globalThis !== 'undefined' ? globalThis : window;
   root.GradientReader = root.GradientReader || {};
   root.GradientReader.settings = api;
 

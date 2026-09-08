@@ -36,11 +36,7 @@
  * gives three even if the reader asked for four. Three real colours beat four
  * where two of them are the same colour.
  *
- *   "for"   which paper the stops were picked against: 'light', 'dark', 'both'.
- *   "derive" if present, the stops are computed at paint time from the page's own
- *            ink and paper colours instead of being fixed. Only 'mono' does this,
- *            and mono is the one palette that does start at the ink, because a
- *            lightness ramp anchored anywhere else is not a lightness ramp.
+ *   "for"   which paper the stops were picked against: 'light' or 'dark'.
  *   "note"  the colour-vision note shown next to the palette on the options page.
  */
 
@@ -70,62 +66,60 @@
             'colour on a page you are working in feels like too much.'
     },
 
-    blues: {
-      label: 'Blues',
+    contrast: {
+      label: 'Contrast',
       for: 'light',
-      stops: ['#2a6ea3', '#20356e', '#387984'],
-      note: 'A mid blue, a deep navy, a slate teal — one family, told apart ' +
-            'by lightness rather than hue. The subtlest of the coloured ' +
-            'palettes and the narrowest: separation of 20 against Bright’s ' +
-            '37, because staying in one family is most of the budget.'
+      stops: ['#0e2a60', '#a85200', '#175449', '#2a6ee0'],
+      note: 'Dark navy, amber, dark teal, blue — and unlike the others, the ' +
+            'stops step through four distinct levels of lightness as well as ' +
+            'four hues. That makes it the one palette that still works with ' +
+            'no colour vision at all, since the light-and-dark rhythm carries ' +
+            'the line breaks on its own if the hues collapse. The strongest ' +
+            'sense of texture of the three, and the safest.'
     },
 
+    /* Not in the picker. See DARK_PALETTE below. */
     night: {
       label: 'Night',
       for: 'dark',
       stops: ['#7ab4f0', '#d9a95e', '#5fc9b4'],
-      note: 'For dark paper: light blue, sand, seafoam. Painting the daytime ' +
-            'palettes onto a dark page gives you dark text on a dark ' +
-            'background, which is not a subtle effect but an unreadable one. ' +
-            'The extension switches to this by itself unless you have chosen ' +
-            'otherwise.'
-    },
-
-    mono: {
-      label: 'Mono',
-      for: 'both',
-      derive: 'luminance',
-      note: 'Lightness only, mixed from whatever ink and paper the page ' +
-            'already uses. No hue at all, so it works for every reader, ' +
-            'including complete colour blindness. The only palette that ' +
-            'starts at your text colour, because a lightness ramp has to ' +
-            'start somewhere real. Also the subtlest option, which is often ' +
-            'the one people keep.'
+      note: 'Used automatically on pages that are already dark, whichever ' +
+            'palette you picked. Light blue, sand, seafoam.'
     }
   };
 
-  /* The order the palettes appear in the interface, loudest first. */
-  var PALETTE_ORDER = ['bright', 'deep', 'blues', 'night', 'mono'];
+  /* The palettes you can choose, loudest first. */
+  var PALETTE_ORDER = ['bright', 'deep', 'contrast'];
 
-  /* How far each mono stop travels from the ink towards the paper.
+  /* The palette used on dark pages, whatever the reader chose.
    *
-   * The order alternates far, near, middle rather than climbing steadily, and
-   * that is not an aesthetic choice. Lightness is the only thing mono has, so
-   * every neighbouring pair in the cycle — including the pair that closes it,
-   * which is a different pair at each of the three cycle lengths — has to be
-   * far enough apart to read as a change. A steady climb puts two adjacent
-   * stops right next to each other at the wrap, and the whole effect
-   * disappears for one line in three.
+   * This is not a preference and there is no setting for it, because the
+   * alternative was measured and cannot be relied on. The obvious
+   * simplification is to drop this palette and let the contrast floor lighten
+   * whichever palette the reader picked until it reads against a dark
+   * background. The floor does lighten them — and it lightens them *together*,
+   * towards the same pale ink, so they can converge.
    *
-   * The contrast floor in the engine pulls any of these back if a page's own
-   * colours make them too faint, so they are written here as the ideal rather
-   * than as the limit. */
-  var MONO_STEPS = [0, 0.45, 0.12, 0.30];
+   * Measured on a dark page, worst-case separation between neighbouring stops,
+   * where 12 is the bar:
+   *
+   *   Bright     9.9   collapses — and it is the default
+   *   Deep      19.3   survives, washed out
+   *   Contrast  37.0   barely notices, because its stops span a wide
+   *                    lightness range the floor cannot squeeze together
+   *
+   * So it is not true that every palette collapses; it is true that the
+   * default does, which is enough to make the simplification unsafe. Dark
+   * pages get stops chosen for dark paper instead, and one shared set of them
+   * is the whole of the complication. If per-palette dark variants are ever
+   * wanted, each needs designing and measuring on its own — do not try to
+   * compute one. */
+  var DARK_PALETTE = 'night';
 
   var api = {
     PALETTES: PALETTES,
     PALETTE_ORDER: PALETTE_ORDER,
-    MONO_STEPS: MONO_STEPS
+    DARK_PALETTE: DARK_PALETTE
   };
 
   /* Two homes for this file: a Chrome content script, where it hangs off a

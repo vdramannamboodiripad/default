@@ -88,6 +88,7 @@
     entries: null,        // Map of block element -> { block, nodes, characters }
     dirty: [],            // subtrees the page changed, waiting to be looked at
     sawFirstResize: false, // ResizeObserver always fires once on observe
+    articleHint: null,    // null until worked out; then true or false
     chunkSize: 4,
     spanCount: 0,
     degraded: false,
@@ -655,21 +656,15 @@
 
   /* Pick the palette to paint with.
    *
-   * A site in its own dark mode needs the Night palette; painting the daytime
-   * palettes onto it means dark text on a dark background, which is not a
-   * subtle effect but an unreadable page. The switch only overrides a palette
-   * that was chosen for light paper, so somebody who deliberately picks Mono
-   * or Night keeps it. */
+   * A dark page gets the dark-paper palette, whatever the reader chose, and
+   * there is no setting for that. Painting a daytime palette onto a dark page
+   * means dark text on a dark background — not a subtle effect but an
+   * unreadable one — and the alternative of lightening the chosen palette to
+   * fit was measured and collapses. palettes.js has the numbers. */
   function buildRamp() {
-    var name = state.settings.palette;
-    var table = NS.palettes.PALETTES;
-
-    if (state.settings.autoNight && engine.isDark(state.paper)) {
-      var current = table[name];
-      if (current && current.for === 'light') name = 'night';
-    } else if (name === 'night' && !engine.isDark(state.paper)) {
-      name = 'blues';
-    }
+    var name = engine.isDark(state.paper)
+      ? NS.palettes.DARK_PALETTE
+      : state.settings.palette;
 
     state.ramp = engine.buildRamp(name, state.ink, state.paper, state.settings.cycle);
   }
@@ -923,14 +918,33 @@
    * TALKING TO THE REST OF THE EXTENSION
    * ========================================================================= */
 
+  /* Does this page look like an article? Worked out once and remembered.
+   *
+   * This used to run on demand, inside status(), which meant that opening the
+   * popup fired a full detection pass — every candidate container measured for
+   * prose and link density, which on a big page means reading textContent over
+   * most of the document — while the popup sat there waiting for the answer.
+   * That was half of why opening the popup felt slow.
+   *
+   * It is worked out once shortly after load instead, when nothing is waiting
+   * for it, and the answer is a coarse hint that does not need to be fresh. */
+  function articleHint() {
+    if (state.articleHint === null) {
+      state.articleHint = !!detect.findArticleRoot(
+        document, ASKED_MIN_CHARACTERS, ASKED_MIN_PARAGRAPHS
+      );
+    }
+    return state.articleHint;
+  }
+
   function status() {
     return {
       ok: true,
       on: state.on,
       host: state.host,
-      hasArticle: state.on
-        ? true
-        : !!detect.findArticleRoot(document, ASKED_MIN_CHARACTERS, ASKED_MIN_PARAGRAPHS),
+      // `null` means "not worked out yet", and the popup says nothing rather
+      // than guessing out loud.
+      hasArticle: state.on ? true : state.articleHint,
       autoAllowed: detect.autoRunAllowed(state.host),
       spans: state.spanCount,
       blocks: state.units.length,
@@ -1034,8 +1048,20 @@
    * ========================================================================= */
 
   loadSettings().then(function (loaded) {
-    if (!state.settings.autoRun) return;
-    if (loaded.mode !== 'on') return;
-    turnOn(false);
+    if (state.settings.autoRun && loaded.mode === 'on') {
+      turnOn(false);
+      return;
+    }
+
+    /* Not running here. Work out whether this even looks like an article, so
+     * that opening the popup gets an instant answer instead of waiting for the
+     * detection pass. Done at idle, because nothing is waiting for it now and
+     * the page has better things to do. */
+    if (window.top !== window) return;
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(articleHint, { timeout: 3000 });
+    } else {
+      window.setTimeout(articleHint, 800);
+    }
   });
 })();
